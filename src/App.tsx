@@ -1,5 +1,9 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import {
+  Routes,
+  Route,
+  useLocation,
+} from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { CartProvider } from '@/context/CartContext';
@@ -62,23 +66,28 @@ function AppRoutes() {
     </>
   );
 }
-
 export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2200);
-    return () => clearTimeout(timer);
+    const timer = window.setTimeout(() => {
+      setLoading(false);
+    }, 2200);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, []);
 
   return (
     <ErrorBoundary>
       <ThemeProvider>
         <CartProvider>
-          <BrowserRouter>
-            <AnimatePresence>{loading && <LoadingScreen />}</AnimatePresence>
-            <AppRoutes />
-          </BrowserRouter>
+          <AnimatePresence>
+            {loading && <LoadingScreen />}
+          </AnimatePresence>
+
+          <AppRoutes />
         </CartProvider>
       </ThemeProvider>
     </ErrorBoundary>

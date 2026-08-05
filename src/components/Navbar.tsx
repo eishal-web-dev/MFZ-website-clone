@@ -14,6 +14,8 @@ import {
   Menu,
   X,
   ArrowRight,
+  User,
+  LogOut,
 } from 'lucide-react';
 
 import { useTheme } from '@/context/ThemeContext';
@@ -28,6 +30,13 @@ const navLinks = [
   { label: 'About', path: '/about' },
   { label: 'Contact', path: '/contact' },
 ];
+interface StoredUser {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  crunchPoints?: number;
+}
 
 export function Navbar() {
   const { activeProduct } = useTheme();
@@ -37,7 +46,8 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [user, setUser] = useState<StoredUser | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -54,12 +64,40 @@ export function Navbar() {
       window.removeEventListener('scroll', onScroll);
     };
   }, []);
+useEffect(() => {
+  const loadUser = () => {
+    const savedUser = localStorage.getItem('mfz_user');
 
-  useEffect(() => {
-    setMobileOpen(false);
-    setSearchOpen(false);
-    setSearchQuery('');
-  }, [location.pathname]);
+    if (!savedUser) {
+      setUser(null);
+      return;
+    }
+
+    try {
+      setUser(JSON.parse(savedUser) as StoredUser);
+    } catch {
+      localStorage.removeItem('mfz_user');
+      localStorage.removeItem('mfz_auth_token');
+      setUser(null);
+    }
+  };
+
+  loadUser();
+
+  window.addEventListener('mfz-auth-changed', loadUser);
+  window.addEventListener('storage', loadUser);
+
+  return () => {
+    window.removeEventListener('mfz-auth-changed', loadUser);
+    window.removeEventListener('storage', loadUser);
+  };
+}, []);
+useEffect(() => {
+  setMobileOpen(false);
+  setSearchOpen(false);
+  setSearchQuery('');
+  setAccountOpen(false);
+}, [location.pathname]);
 
   useEffect(() => {
     if (!searchOpen && !mobileOpen) {
@@ -68,7 +106,19 @@ export function Navbar() {
     }
 
     document.body.style.overflow = 'hidden';
+const handleSignOut = () => {
+  localStorage.removeItem('mfz_auth_token');
+  localStorage.removeItem('mfz_user');
 
+  setUser(null);
+  setAccountOpen(false);
+
+  window.dispatchEvent(
+    new Event('mfz-auth-changed'),
+  );
+
+  navigate('/');
+};
     return () => {
       document.body.style.overflow = '';
     };
@@ -376,6 +426,161 @@ export function Navbar() {
                 color: a.textColor,
               }}
             >
+              <div className="relative">
+  {user ? (
+    <>
+      <button
+        type="button"
+        onClick={() =>
+          setAccountOpen((current) => !current)
+        }
+        aria-label="Open account menu"
+        className="
+          flex
+          h-9
+          w-9
+          items-center
+          justify-center
+          rounded-full
+          font-black
+          uppercase
+          transition-transform
+          hover:scale-110
+        "
+        style={{
+          background: a.accentColor,
+          color: a.onAccent,
+        }}
+      >
+        {user.name?.charAt(0) || 'U'}
+      </button>
+
+      <AnimatePresence>
+        {accountOpen && (
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: -8,
+              scale: 0.96,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              scale: 1,
+            }}
+            exit={{
+              opacity: 0,
+              y: -8,
+              scale: 0.96,
+            }}
+            className="
+              absolute
+              right-0
+              top-[calc(100%+14px)]
+              z-[90]
+              w-72
+              overflow-hidden
+              rounded-2xl
+              border
+              p-3
+              shadow-2xl
+              backdrop-blur-xl
+            "
+            style={{
+              background: 'rgba(15,15,15,0.95)',
+              borderColor: `${a.accentColor}44`,
+            }}
+          >
+            <div
+              className="rounded-xl p-4"
+              style={{
+                background:
+                  'rgba(255,255,255,0.05)',
+              }}
+            >
+              <p
+                className="truncate font-black"
+                style={{
+                  color: a.textColor,
+                }}
+              >
+                {user.name}
+              </p>
+
+              <p
+                className="mt-1 truncate text-xs"
+                style={{
+                  color: a.textColor,
+                  opacity: 0.55,
+                }}
+              >
+                {user.email}
+              </p>
+
+              <p
+                className="mt-3 text-xs font-bold uppercase tracking-widest"
+                style={{
+                  color: a.accentColor,
+                }}
+              >
+                {user.crunchPoints ?? 0} Crunch Points
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="
+                mt-2
+                flex
+                w-full
+                items-center
+                gap-3
+                rounded-xl
+                px-4
+                py-3
+                text-left
+                text-sm
+                font-bold
+                transition-colors
+                hover:bg-white/5
+              "
+              style={{
+                color: a.textColor,
+              }}
+            >
+              <LogOut size={17} />
+              Sign Out
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  ) : (
+    <Link
+      to="/signin"
+      aria-label="Sign in"
+      className="
+        flex
+        h-9
+        w-9
+        items-center
+        justify-center
+        rounded-full
+        border
+        transition-transform
+        hover:scale-110
+      "
+      style={{
+        color: a.textColor,
+        borderColor: `${a.textColor}33`,
+        background: 'rgba(255,255,255,0.05)',
+      }}
+    >
+      <User size={19} />
+    </Link>
+  )}
+</div>
               <Menu size={24} />
             </button>
           </div>

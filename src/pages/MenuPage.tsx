@@ -11,7 +11,7 @@ export default function MenuPage() {
   const { add } = useCart();
   const a = activeProduct;
 
-  const [category, setCategory] = useState('Popular');
+ const [category, setCategory] = useState('All');
   const [query, setQuery] = useState('');
   const [spiceFilter, setSpiceFilter] = useState<number | null>(null);
   const [cheeseFilter, setCheeseFilter] = useState(false);
@@ -22,20 +22,54 @@ export default function MenuPage() {
   const [detailQty, setDetailQty] = useState(1);
 
   const filtered = useMemo(() => {
-    return menuItems.filter((item) => {
-      if (category === 'Popular') {
-        if (!item.popular) return false;
-      } else if (item.category !== category) {
-        return false;
-      }
-      if (query && !item.name.toLowerCase().includes(query.toLowerCase()) && !item.description.toLowerCase().includes(query.toLowerCase())) return false;
-      if (spiceFilter !== null && item.spiceLevel !== spiceFilter) return false;
-      if (cheeseFilter && !item.hasCheese) return false;
-      if (sausageFilter && !item.hasSausage) return false;
-      if (item.price > maxPrice) return false;
-      return true;
-    });
-  }, [category, query, spiceFilter, cheeseFilter, sausageFilter, maxPrice]);
+  const normalizedQuery = query.trim().toLowerCase();
+
+  return menuItems.filter((item) => {
+    const matchesCategory =
+      category === 'All'
+        ? true
+        : category === 'Popular'
+          ? Boolean(item.popular)
+          : item.category === category;
+
+    const matchesSearch =
+      normalizedQuery.length === 0 ||
+      item.name.toLowerCase().includes(normalizedQuery) ||
+      item.description.toLowerCase().includes(normalizedQuery) ||
+      item.category.toLowerCase().includes(normalizedQuery);
+
+    const matchesSpice =
+      spiceFilter === null ||
+      item.spiceLevel === spiceFilter;
+
+    const matchesCheese =
+      !cheeseFilter ||
+      item.hasCheese;
+
+    const matchesSausage =
+      !sausageFilter ||
+      item.hasSausage;
+
+    const matchesPrice =
+      item.price <= maxPrice;
+
+    return (
+      matchesCategory &&
+      matchesSearch &&
+      matchesSpice &&
+      matchesCheese &&
+      matchesSausage &&
+      matchesPrice
+    );
+  });
+}, [
+  category,
+  query,
+  spiceFilter,
+  cheeseFilter,
+  sausageFilter,
+  maxPrice,
+]);
 
   const toggleFav = (id: number) =>
     setFavourites((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]));
@@ -129,6 +163,45 @@ export default function MenuPage() {
                   <Heart size={18} fill={favourites.includes(item.id) ? a.accentColor : 'none'} color={favourites.includes(item.id) ? a.accentColor : a.textColor} style={{ opacity: favourites.includes(item.id) ? 1 : 0.5 }} />
                 </button>
               </div>
+              <div
+ className="relative mb-5 flex h-[250px] items-center justify-center overflow-hidden rounded-2xl"
+  style={{
+    background:
+      'radial-gradient(circle at center, rgba(255,255,255,0.14), rgba(255,255,255,0.03))',
+  }}
+>
+  {item.image ? (
+    <img
+      src={item.image}
+      alt={item.name}
+     className="h-[230px] w-full object-contain p-2 transition-transform duration-500 group-hover:scale-110"
+      draggable={false}
+      loading="lazy"
+    />
+  ) : (
+    <div
+      className="flex h-full w-full items-center justify-center text-sm"
+      style={{
+        color: a.textColor,
+        opacity: 0.5,
+      }}
+    >
+      Image coming soon
+    </div>
+  )}
+
+  {item.popular && (
+    <span
+      className="absolute left-3 top-3 rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-wide"
+      style={{
+        background: a.accentColor,
+        color: a.onAccent,
+      }}
+    >
+      Popular
+    </span>
+  )}
+</div>
               <h3 className="text-xl font-black mb-1" style={{ color: a.textColor, fontFamily: 'Anton, sans-serif' }}>{item.name}</h3>
               <p className="text-sm mb-4" style={{ color: a.textColor, opacity: 0.6 }}>{item.description}</p>
               <div className="flex items-center justify-between">
@@ -172,6 +245,32 @@ export default function MenuPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <button onClick={() => { setDetail(null); setDetailQty(1); }} className="absolute top-4 right-4" style={{ color: a.textColor }} aria-label="Close"><X size={22} /></button>
+            <div
+  className="mb-6 flex h-[260px] items-center justify-center overflow-hidden rounded-2xl"
+  style={{
+    background:
+      'radial-gradient(circle at center, rgba(255,255,255,0.14), rgba(255,255,255,0.03))',
+  }}
+>
+  {detail.image ? (
+    <img
+      src={detail.image}
+      alt={detail.name}
+      className="h-full w-full object-contain p-3"
+      draggable={false}
+    />
+  ) : (
+    <span
+      className="text-sm"
+      style={{
+        color: a.textColor,
+        opacity: 0.5,
+      }}
+    >
+      Image coming soon
+    </span>
+  )}
+</div>
             <h2 className="text-4xl font-black mb-2" style={{ color: a.textColor, fontFamily: 'Anton, sans-serif' }}>{detail.name}</h2>
             <p className="text-base mb-4" style={{ color: a.textColor, opacity: 0.8 }}>{detail.description}</p>
             <div className="flex gap-2 mb-6">

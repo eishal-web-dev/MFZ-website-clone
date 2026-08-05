@@ -1,9 +1,24 @@
-import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ShoppingBag, Menu, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
+import {
+  motion,
+  AnimatePresence,
+} from 'framer-motion';
+import {
+  Search,
+  ShoppingBag,
+  Menu,
+  X,
+  ArrowRight,
+} from 'lucide-react';
+
 import { useTheme } from '@/context/ThemeContext';
 import { useCart } from '@/context/CartContext';
+import { menuItems } from '@/data/menu';
 
 const navLinks = [
   { label: 'Home', path: '/' },
@@ -17,91 +32,749 @@ const navLinks = [
 export function Navbar() {
   const { activeProduct } = useTheme();
   const { count, open } = useCart();
+
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const location = useLocation();
+  const navigate = useNavigate();
+
   const a = activeProduct;
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    const onScroll = () => {
+      setScrolled(window.scrollY > 40);
+    };
+
     window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+    };
   }, []);
 
   useEffect(() => {
     setMobileOpen(false);
+    setSearchOpen(false);
+    setSearchQuery('');
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!searchOpen && !mobileOpen) {
+      document.body.style.overflow = '';
+      return;
+    }
+
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [searchOpen, mobileOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSearchOpen(false);
+        setMobileOpen(false);
+      }
+
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.key.toLowerCase() === 'k'
+      ) {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  const searchResults = useMemo(() => {
+    const normalizedQuery = searchQuery
+      .trim()
+      .toLowerCase();
+
+    if (!normalizedQuery) {
+      return menuItems
+        .filter((item) => item.popular)
+        .slice(0, 6);
+    }
+
+    return menuItems
+      .filter((item) => {
+        return (
+          item.name
+            .toLowerCase()
+            .includes(normalizedQuery) ||
+          item.description
+            .toLowerCase()
+            .includes(normalizedQuery) ||
+          item.category
+            .toLowerCase()
+            .includes(normalizedQuery)
+        );
+      })
+      .slice(0, 8);
+  }, [searchQuery]);
+
+  const openSearch = () => {
+    setMobileOpen(false);
+    setSearchOpen(true);
+  };
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setSearchQuery('');
+  };
+
+  const goToSearchResults = () => {
+    const trimmedQuery = searchQuery.trim();
+
+    if (!trimmedQuery) {
+      navigate('/menu');
+      closeSearch();
+      return;
+    }
+
+    navigate(
+      `/menu?search=${encodeURIComponent(trimmedQuery)}`,
+    );
+
+    closeSearch();
+  };
+
+  const goToMenuItem = (itemName: string) => {
+    navigate(
+      `/menu?search=${encodeURIComponent(itemName)}`,
+    );
+
+    closeSearch();
+  };
 
   return (
     <>
       <header
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
+        className="
+          fixed
+          left-0
+          right-0
+          top-0
+          z-50
+          transition-all
+          duration-500
+        "
         style={{
           height: 'var(--nav-h)',
-          background: scrolled ? 'rgba(10,10,10,0.7)' : 'transparent',
-          backdropFilter: scrolled ? 'blur(16px)' : 'none',
-          borderBottom: scrolled ? `1px solid ${a.accentColor}33` : '1px solid transparent',
+          background: scrolled
+            ? 'rgba(10,10,10,0.7)'
+            : 'transparent',
+          backdropFilter: scrolled
+            ? 'blur(16px)'
+            : 'none',
+          borderBottom: scrolled
+            ? `1px solid ${a.accentColor}33`
+            : '1px solid transparent',
         }}
       >
-        <nav className="mfz-container h-full flex items-center justify-between">
+        <nav
+          className="
+            mfz-container
+            flex
+            h-full
+            items-center
+            justify-between
+          "
+        >
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-2xl md:text-3xl font-black tracking-tighter" style={{ color: a.textColor, fontFamily: 'Anton, sans-serif' }}>
+          <Link
+            to="/"
+            className="
+              flex
+              flex-shrink-0
+              items-center
+              gap-2
+            "
+          >
+            <span
+              className="
+                text-2xl
+                font-black
+                tracking-tighter
+                md:text-3xl
+              "
+              style={{
+                color: a.textColor,
+                fontFamily: 'Anton, sans-serif',
+              }}
+            >
               MFZ
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] hidden sm:block" style={{ color: a.accentColor }}>
+
+            <span
+              className="
+                hidden
+                text-[10px]
+                font-bold
+                uppercase
+                tracking-[0.2em]
+                sm:block
+              "
+              style={{
+                color: a.accentColor,
+              }}
+            >
               Corndog
             </span>
           </Link>
 
-          {/* Center nav */}
-          <div className="hidden lg:flex items-center gap-7 absolute left-1/2 -translate-x-1/2">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className="text-sm font-bold uppercase tracking-wide transition-colors"
-                style={{
-                  color: location.pathname === link.path ? a.accentColor : a.textColor,
-                  opacity: location.pathname === link.path ? 1 : 0.7,
-                }}
-              >
-                {link.label}
-              </Link>
-            ))}
+          {/* Desktop navigation */}
+          <div
+            className="
+              absolute
+              left-1/2
+              hidden
+              -translate-x-1/2
+              items-center
+              gap-7
+              lg:flex
+            "
+          >
+            {navLinks.map((link) => {
+              const isActive =
+                location.pathname === link.path;
+
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className="
+                    text-sm
+                    font-bold
+                    uppercase
+                    tracking-wide
+                    transition-colors
+                  "
+                  style={{
+                    color: isActive
+                      ? a.accentColor
+                      : a.textColor,
+                    opacity: isActive ? 1 : 0.7,
+                  }}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </div>
 
-          {/* Right actions */}
-          <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
-            <button aria-label="Search" className="transition-transform hover:scale-110 p-1.5" style={{ color: a.textColor }}>
+          {/* Actions */}
+          <div
+            className="
+              flex
+              flex-shrink-0
+              items-center
+              gap-3
+              md:gap-4
+            "
+          >
+            <button
+              type="button"
+              aria-label="Search menu"
+              onClick={openSearch}
+              className="
+                p-1.5
+                transition-transform
+                hover:scale-110
+              "
+              style={{
+                color: a.textColor,
+              }}
+            >
               <Search size={20} />
             </button>
-            <button onClick={open} aria-label="Cart" className="relative transition-transform hover:scale-110 p-1.5" style={{ color: a.textColor }}>
+
+            <button
+              type="button"
+              onClick={open}
+              aria-label="Cart"
+              className="
+                relative
+                p-1.5
+                transition-transform
+                hover:scale-110
+              "
+              style={{
+                color: a.textColor,
+              }}
+            >
               <ShoppingBag size={20} />
+
               {count > 0 && (
-                <span className="absolute -top-1 -right-1 text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center" style={{ background: a.accentColor, color: a.onAccent }}>
+                <span
+                  className="
+                    absolute
+                    -right-1
+                    -top-1
+                    flex
+                    h-5
+                    w-5
+                    items-center
+                    justify-center
+                    rounded-full
+                    text-[10px]
+                    font-black
+                  "
+                  style={{
+                    background: a.accentColor,
+                    color: a.onAccent,
+                  }}
+                >
                   {count}
                 </span>
               )}
             </button>
+
             <Link
               to="/menu"
-              className="hidden md:block px-5 py-2.5 rounded-full text-sm font-black uppercase tracking-wide btn-primary"
-              style={{ background: a.accentColor, color: a.onAccent }}
+              className="
+                btn-primary
+                hidden
+                rounded-full
+                px-5
+                py-2.5
+                text-sm
+                font-black
+                uppercase
+                tracking-wide
+                md:block
+              "
+              style={{
+                background: a.accentColor,
+                color: a.onAccent,
+              }}
             >
               Order Now
             </Link>
+
             <button
-              onClick={() => setMobileOpen(true)}
-              className="lg:hidden p-1.5"
+              type="button"
+              onClick={() => {
+                setSearchOpen(false);
+                setMobileOpen(true);
+              }}
+              className="p-1.5 lg:hidden"
               aria-label="Open menu"
-              style={{ color: a.textColor }}
+              style={{
+                color: a.textColor,
+              }}
             >
               <Menu size={24} />
             </button>
           </div>
         </nav>
       </header>
+
+      {/* Search overlay */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="
+  fixed
+  inset-0
+  z-[80]
+  flex
+  items-start
+  justify-center
+  bg-black/75
+  px-4
+  pt-4
+  backdrop-blur-xl
+  sm:px-6
+  sm:pt-5
+"
+            onClick={closeSearch}
+          >
+            <motion.div
+              initial={{
+                opacity: 0,
+                y: -24,
+                scale: 0.96,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                scale: 1,
+              }}
+              exit={{
+                opacity: 0,
+                y: -18,
+                scale: 0.97,
+              }}
+              transition={{
+                duration: 0.28,
+              }}
+              className="
+                w-full
+                max-w-3xl
+                overflow-hidden
+                rounded-3xl
+                border
+                shadow-2xl
+              "
+              style={{
+                background: a.bgGradient,
+                borderColor: `${a.accentColor}55`,
+              }}
+              onClick={(event) =>
+                event.stopPropagation()
+              }
+            >
+              {/* Search input */}
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  goToSearchResults();
+                }}
+                className="
+                  flex
+                  items-center
+                  gap-3
+                  border-b
+                  p-4
+                  sm:p-5
+                "
+                style={{
+                  borderColor: `${a.textColor}18`,
+                }}
+              >
+                <Search
+                  size={22}
+                  className="shrink-0"
+                  style={{
+                    color: a.accentColor,
+                  }}
+                />
+
+                <input
+                  autoFocus
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) =>
+                    setSearchQuery(event.target.value)
+                  }
+                  placeholder="Search corndogs, combos, drinks..."
+                  className="
+                    min-w-0
+                    flex-1
+                    bg-transparent
+                    text-base
+                    outline-none
+                    placeholder:opacity-40
+                    sm:text-lg
+                  "
+                  style={{
+                    color: a.textColor,
+                  }}
+                />
+
+                <button
+                  type="button"
+                  onClick={closeSearch}
+                  aria-label="Close search"
+                  className="
+                    flex
+                    h-10
+                    w-10
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-full
+                    transition-transform
+                    hover:scale-110
+                  "
+                  style={{
+                    color: a.textColor,
+                    background:
+                      'rgba(255,255,255,0.08)',
+                  }}
+                >
+                  <X size={20} />
+                </button>
+              </form>
+
+              {/* Results */}
+              <div className="max-h-[60vh] overflow-y-auto p-3 sm:p-4">
+                <div
+                  className="
+                    mb-3
+                    flex
+                    items-center
+                    justify-between
+                    gap-4
+                    px-2
+                  "
+                >
+                  <span
+                    className="
+                      text-xs
+                      font-bold
+                      uppercase
+                      tracking-[0.2em]
+                    "
+                    style={{
+                      color: a.textColor,
+                      opacity: 0.55,
+                    }}
+                  >
+                    {searchQuery.trim()
+                      ? `${searchResults.length} results`
+                      : 'Popular items'}
+                  </span>
+
+                  <span
+                    className="hidden text-xs sm:block"
+                    style={{
+                      color: a.textColor,
+                      opacity: 0.4,
+                    }}
+                  >
+                    Ctrl / Cmd + K
+                  </span>
+                </div>
+
+                {searchResults.length > 0 ? (
+                  <div className="space-y-2">
+                    {searchResults.map(
+                      (item, index) => (
+                        <motion.button
+                          key={item.id}
+                          type="button"
+                          initial={{
+                            opacity: 0,
+                            y: 10,
+                          }}
+                          animate={{
+                            opacity: 1,
+                            y: 0,
+                          }}
+                          transition={{
+                            delay: index * 0.035,
+                          }}
+                          onClick={() =>
+                            goToMenuItem(item.name)
+                          }
+                          className="
+                            group
+                            grid
+                            w-full
+                            grid-cols-[68px_1fr_auto]
+                            items-center
+                            gap-3
+                            rounded-2xl
+                            p-3
+                            text-left
+                            transition-all
+                            hover:translate-x-1
+                          "
+                          style={{
+                            background:
+                              'rgba(255,255,255,0.06)',
+                          }}
+                        >
+                          <div
+                            className="
+                              flex
+                              h-[68px]
+                              w-[68px]
+                              items-center
+                              justify-center
+                              overflow-hidden
+                              rounded-xl
+                            "
+                            style={{
+                              background:
+                                'rgba(255,255,255,0.06)',
+                            }}
+                          >
+                            {item.image ? (
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                className="
+                                  h-full
+                                  w-full
+                                  object-contain
+                                  p-1.5
+                                "
+                                draggable={false}
+                              />
+                            ) : (
+                              <Search
+                                size={20}
+                                style={{
+                                  color:
+                                    a.accentColor,
+                                }}
+                              />
+                            )}
+                          </div>
+
+                          <div className="min-w-0">
+                            <h3
+                              className="
+                                truncate
+                                text-base
+                                font-black
+                                sm:text-lg
+                              "
+                              style={{
+                                color: a.textColor,
+                                fontFamily:
+                                  'Anton, sans-serif',
+                              }}
+                            >
+                              {item.name}
+                            </h3>
+
+                            <p
+                              className="
+                                mt-0.5
+                                truncate
+                                text-xs
+                                sm:text-sm
+                              "
+                              style={{
+                                color: a.textColor,
+                                opacity: 0.55,
+                              }}
+                            >
+                              {item.category}
+                            </p>
+                          </div>
+
+                          <div
+                            className="
+                              flex
+                              items-center
+                              gap-2
+                              font-black
+                            "
+                            style={{
+                              color: a.accentColor,
+                            }}
+                          >
+                            <span className="hidden sm:inline">
+                              Rs.{' '}
+                              {item.price.toLocaleString(
+                                'en-PK',
+                              )}
+                            </span>
+
+                            <ArrowRight
+                              size={17}
+                              className="
+                                transition-transform
+                                group-hover:translate-x-1
+                              "
+                            />
+                          </div>
+                        </motion.button>
+                      ),
+                    )}
+                  </div>
+                ) : (
+                  <div className="px-5 py-14 text-center">
+                    <h3
+                      className="text-2xl font-black"
+                      style={{
+                        color: a.textColor,
+                        fontFamily:
+                          'Anton, sans-serif',
+                      }}
+                    >
+                      No Items Found
+                    </h3>
+
+                    <p
+                      className="mt-2 text-sm"
+                      style={{
+                        color: a.textColor,
+                        opacity: 0.55,
+                      }}
+                    >
+                      Try searching for Potato,
+                      Flaming, Ramen, Combo, Pepsi or
+                      Water.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer action */}
+              <div
+                className="
+                  flex
+                  items-center
+                  justify-between
+                  gap-4
+                  border-t
+                  p-4
+                  sm:p-5
+                "
+                style={{
+                  borderColor: `${a.textColor}18`,
+                }}
+              >
+                <span
+                  className="hidden text-xs sm:block"
+                  style={{
+                    color: a.textColor,
+                    opacity: 0.45,
+                  }}
+                >
+                  Press Enter to view all matching
+                  menu items
+                </span>
+
+                <button
+                  type="button"
+                  onClick={goToSearchResults}
+                  className="
+                    ml-auto
+                    flex
+                    items-center
+                    gap-2
+                    rounded-full
+                    px-6
+                    py-3
+                    text-sm
+                    font-black
+                    uppercase
+                  "
+                  style={{
+                    background: a.accentColor,
+                    color: a.onAccent,
+                  }}
+                >
+                  Search Menu
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Mobile full-screen menu */}
       <AnimatePresence>
@@ -110,45 +783,163 @@ export function Navbar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] lg:hidden flex flex-col"
-            style={{ background: a.bgGradient }}
+            className="
+              fixed
+              inset-0
+              z-[60]
+              flex
+              flex-col
+              lg:hidden
+            "
+            style={{
+              background: a.bgGradient,
+            }}
           >
-            <div className="flex items-center justify-between p-5" style={{ height: 'var(--nav-h)' }}>
-              <span className="text-2xl font-black" style={{ color: a.textColor, fontFamily: 'Anton, sans-serif' }}>MFZ</span>
-              <button onClick={() => setMobileOpen(false)} aria-label="Close menu" style={{ color: a.textColor }}>
+            <div
+              className="
+                flex
+                items-center
+                justify-between
+                p-5
+              "
+              style={{
+                height: 'var(--nav-h)',
+              }}
+            >
+              <span
+                className="text-2xl font-black"
+                style={{
+                  color: a.textColor,
+                  fontFamily: 'Anton, sans-serif',
+                }}
+              >
+                MFZ
+              </span>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setMobileOpen(false)
+                }
+                aria-label="Close menu"
+                style={{
+                  color: a.textColor,
+                }}
+              >
                 <X size={28} />
               </button>
             </div>
-            <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6">
-              {navLinks.map((link, i) => (
+
+            <div
+              className="
+                flex
+                flex-1
+                flex-col
+                items-center
+                justify-center
+                gap-3
+                px-6
+              "
+            >
+              <motion.button
+                type="button"
+                initial={{
+                  opacity: 0,
+                  y: 40,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                onClick={openSearch}
+                className="
+                  mb-5
+                  flex
+                  items-center
+                  gap-3
+                  rounded-full
+                  border
+                  px-6
+                  py-3
+                  text-base
+                  font-black
+                  uppercase
+                "
+                style={{
+                  color: a.textColor,
+                  borderColor: `${a.textColor}33`,
+                }}
+              >
+                <Search size={19} />
+                Search Menu
+              </motion.button>
+
+              {navLinks.map((link, index) => (
                 <motion.div
                   key={link.path}
-                  initial={{ opacity: 0, y: 40 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.06 }}
+                  initial={{
+                    opacity: 0,
+                    y: 40,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  transition={{
+                    delay: index * 0.06,
+                  }}
                 >
                   <Link
                     to={link.path}
-                    className="text-4xl font-black uppercase tracking-tight"
+                    className="
+                      text-4xl
+                      font-black
+                      uppercase
+                      tracking-tight
+                    "
                     style={{
-                      color: location.pathname === link.path ? a.accentColor : a.textColor,
-                      fontFamily: 'Anton, sans-serif',
+                      color:
+                        location.pathname === link.path
+                          ? a.accentColor
+                          : a.textColor,
+                      fontFamily:
+                        'Anton, sans-serif',
                     }}
                   >
                     {link.label}
                   </Link>
                 </motion.div>
               ))}
+
               <motion.div
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: navLinks.length * 0.06 }}
+                initial={{
+                  opacity: 0,
+                  y: 40,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                transition={{
+                  delay:
+                    navLinks.length * 0.06,
+                }}
                 className="mt-6"
               >
                 <Link
                   to="/menu"
-                  className="px-10 py-4 rounded-full text-lg font-black uppercase"
-                  style={{ background: a.accentColor, color: a.onAccent }}
+                  className="
+                    rounded-full
+                    px-10
+                    py-4
+                    text-lg
+                    font-black
+                    uppercase
+                  "
+                  style={{
+                    background: a.accentColor,
+                    color: a.onAccent,
+                  }}
                 >
                   Order Now
                 </Link>

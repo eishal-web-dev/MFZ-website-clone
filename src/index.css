@@ -212,3 +212,44 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .btn-primary:active {
   transform: scale(0.97);
 }
+@keyframes corndogFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--product-rotation, -8deg));
+  }
+
+  50% {
+    transform: translateY(-22px) rotate(var(--product-rotation, -8deg));
+  }
+}
+
+.corndog-float {
+  animation: corndogFloat 3.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+.corndog-float:hover {
+  animation-play-state: paused;
+  transform: translateY(-28px)
+    rotate(var(--product-rotation, -8deg))
+    scale(1.03);
+}
+
+@media (max-width: 768px) {
+  @keyframes corndogFloat {
+    0%,
+    100% {
+      transform: translateY(0) rotate(var(--product-rotation, -5deg));
+    }
+
+    50% {
+      transform: translateY(-12px) rotate(var(--product-rotation, -5deg));
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .corndog-float {
+    animation: none;
+  }
+}

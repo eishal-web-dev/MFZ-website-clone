@@ -315,7 +315,9 @@ export function HeroSlider() {
 
           {/* RIGHT: product stage */}
           <div className="order-1 lg:order-2 relative">
-            <div className="product-stage">
+            <div className="product-stage" style={{
+  transform: "translateY(-100px)"
+}}>
               {/* Circular track */}
               <div className="circular-track" />
 
@@ -420,7 +422,10 @@ export function HeroSlider() {
       </div>
 
       {/* Bottom controls */}
-      <div className="absolute bottom-0 left-0 right-0 z-30 pb-5 md:pb-6">
+     <div
+  className="absolute left-0 right-0 z-30 pb-5 md:pb-6"
+  style={{ bottom: "-70px" }}
+>
         <div className="mfz-container">
           {/* Progress bar */}
           <div className="w-full h-1 rounded-full mb-4 overflow-hidden" style={{ background: 'rgba(255,255,255,0.12)' }}>

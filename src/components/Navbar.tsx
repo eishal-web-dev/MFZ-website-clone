@@ -491,7 +491,7 @@ export function Navbar() {
               items-center
               gap-2
               sm:gap-3
-              md:gap-4
+              md:gap-2
             "
           >
             {/* Search */}

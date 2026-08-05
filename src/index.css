@@ -253,3 +253,300 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     animation: none;
   }
 }
+/* =========================================================
+   MFZ DELIVERY LOADING SCREEN
+========================================================= */
+
+.mfz-loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.mfz-loading-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(
+      circle at 50% 48%,
+      rgba(255, 255, 255, 0.08),
+      transparent 40%
+    );
+}
+
+.mfz-loading-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.035;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.8'/%3E%3C/svg%3E");
+}
+
+.mfz-loader-background-word {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: -1;
+  transform: translate(-50%, -50%);
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(180px, 35vw, 600px);
+  font-weight: 900;
+  line-height: 0.8;
+  letter-spacing: -0.06em;
+  white-space: nowrap;
+  opacity: 0.035;
+  user-select: none;
+  pointer-events: none;
+}
+
+.mfz-loader-content {
+  display: flex;
+  width: min(90vw, 520px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 34px;
+}
+
+.mfz-delivery-loader {
+  display: flex;
+  width: fit-content;
+  height: fit-content;
+  align-items: center;
+  justify-content: center;
+  transform: scale(1.35);
+  transform-origin: center;
+}
+
+.mfz-truck-wrapper {
+  position: relative;
+  display: flex;
+  width: 200px;
+  height: 100px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+
+.mfz-truck-body {
+  position: relative;
+  width: 130px;
+  height: fit-content;
+  margin-bottom: 6px;
+  animation: mfzTruckSuspension 1s linear infinite;
+  will-change: transform;
+}
+
+.mfz-truck-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.mfz-truck-logo {
+  position: absolute;
+  left: 20px;
+  top: 30px;
+  font-family: 'Anton', sans-serif;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  transform: rotate(-2deg);
+}
+
+@keyframes mfzTruckSuspension {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+.mfz-truck-tires {
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  width: 130px;
+  height: fit-content;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px 0 15px;
+}
+
+.mfz-tire-svg {
+  width: 24px;
+  animation: mfzTireRotation 0.7s linear infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+@keyframes mfzTireRotation {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mfz-loader-road {
+  position: relative;
+  bottom: 0;
+  width: 100%;
+  height: 1.5px;
+  align-self: flex-end;
+  border-radius: 3px;
+  opacity: 0.8;
+}
+
+.mfz-loader-road::before {
+  content: '';
+  position: absolute;
+  right: -50%;
+  width: 20px;
+  height: 100%;
+  border-left: 10px solid rgba(255, 255, 255, 0.75);
+  border-radius: 3px;
+  background-color: currentColor;
+  animation: mfzRoadMovement 1.4s linear infinite;
+}
+
+.mfz-loader-road::after {
+  content: '';
+  position: absolute;
+  right: -65%;
+  width: 10px;
+  height: 100%;
+  border-left: 4px solid rgba(255, 255, 255, 0.75);
+  border-radius: 3px;
+  background-color: currentColor;
+  animation: mfzRoadMovement 1.4s linear infinite;
+}
+
+.mfz-lamp-post {
+  position: absolute;
+  right: -90%;
+  bottom: 0;
+  height: 90px;
+  animation: mfzRoadMovement 1.4s linear infinite;
+  will-change: transform;
+}
+
+@keyframes mfzRoadMovement {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-350px);
+  }
+}
+
+.mfz-loader-copy {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.mfz-loader-title {
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(52px, 10vw, 82px);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+}
+
+.mfz-loader-status {
+  margin-top: 14px;
+  font-size: clamp(11px, 2vw, 14px);
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.mfz-loading-dots {
+  display: inline-flex;
+  width: 24px;
+  justify-content: flex-start;
+}
+
+.mfz-loading-dots span {
+  display: inline-block;
+  animation: mfzDotPulse 1.2s infinite;
+}
+
+.mfz-loading-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.mfz-loading-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes mfzDotPulse {
+  0%,
+  20% {
+    opacity: 0.2;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+
+  100% {
+    opacity: 0.2;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================================
+   RESPONSIVE LOADER
+========================================================= */
+
+@media (max-width: 640px) {
+  .mfz-loader-content {
+    gap: 25px;
+  }
+
+  .mfz-delivery-loader {
+    transform: scale(1.1);
+  }
+
+  .mfz-loader-status {
+    letter-spacing: 0.15em;
+  }
+}
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .mfz-truck-body,
+  .mfz-tire-svg,
+  .mfz-loader-road::before,
+  .mfz-loader-road::after,
+  .mfz-lamp-post,
+  .mfz-loading-dots span {
+    animation: none !important;
+  }
+}

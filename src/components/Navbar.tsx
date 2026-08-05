@@ -1,35 +1,35 @@
-import { useEffect, useMemo, useState } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   Link,
   useLocation,
   useNavigate,
 } from 'react-router-dom';
 import {
-  motion,
   AnimatePresence,
+  motion,
 } from 'framer-motion';
 import {
+  ArrowRight,
+  LogOut,
+  Menu,
   Search,
   ShoppingBag,
-  Menu,
-  X,
-  ArrowRight,
   User,
-  LogOut,
+  X,
 } from 'lucide-react';
 
 import { useTheme } from '@/context/ThemeContext';
 import { useCart } from '@/context/CartContext';
 import { menuItems } from '@/data/menu';
 
-const navLinks = [
-  { label: 'Home', path: '/' },
-  { label: 'Menu', path: '/menu' },
-  { label: 'Build Yours', path: '/build' },
-  { label: 'Locations', path: '/locations' },
-  { label: 'About', path: '/about' },
-  { label: 'Contact', path: '/contact' },
-];
+/* =========================================================
+   TYPES
+========================================================= */
+
 interface StoredUser {
   id: string;
   name: string;
@@ -38,97 +38,193 @@ interface StoredUser {
   crunchPoints?: number;
 }
 
+/* =========================================================
+   NAVIGATION LINKS
+========================================================= */
+
+const navLinks = [
+  {
+    label: 'Home',
+    path: '/',
+  },
+  {
+    label: 'Menu',
+    path: '/menu',
+  },
+  {
+    label: 'Build Yours',
+    path: '/build',
+  },
+  {
+    label: 'Locations',
+    path: '/locations',
+  },
+  {
+    label: 'About',
+    path: '/about',
+  },
+  {
+    label: 'Contact',
+    path: '/contact',
+  },
+];
+
+/* =========================================================
+   NAVBAR
+========================================================= */
+
 export function Navbar() {
   const { activeProduct } = useTheme();
   const { count, open } = useCart();
 
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [accountOpen, setAccountOpen] = useState(false);
-  const [user, setUser] = useState<StoredUser | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
-  const a = activeProduct;
+  const active = activeProduct;
+
+  const [scrolled, setScrolled] =
+    useState(false);
+
+  const [mobileOpen, setMobileOpen] =
+    useState(false);
+
+  const [searchOpen, setSearchOpen] =
+    useState(false);
+
+  const [searchQuery, setSearchQuery] =
+    useState('');
+
+  const [accountOpen, setAccountOpen] =
+    useState(false);
+
+  const [user, setUser] =
+    useState<StoredUser | null>(null);
+
+  /* =======================================================
+     SCROLL EFFECT
+  ======================================================= */
 
   useEffect(() => {
-    const onScroll = () => {
+    const handleScroll = () => {
       setScrolled(window.scrollY > 40);
     };
 
-    window.addEventListener('scroll', onScroll);
+    handleScroll();
+
+    window.addEventListener(
+      'scroll',
+      handleScroll,
+    );
 
     return () => {
-      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener(
+        'scroll',
+        handleScroll,
+      );
     };
   }, []);
-useEffect(() => {
-  const loadUser = () => {
-    const savedUser = localStorage.getItem('mfz_user');
 
-    if (!savedUser) {
-      setUser(null);
-      return;
-    }
-
-    try {
-      setUser(JSON.parse(savedUser) as StoredUser);
-    } catch {
-      localStorage.removeItem('mfz_user');
-      localStorage.removeItem('mfz_auth_token');
-      setUser(null);
-    }
-  };
-
-  loadUser();
-
-  window.addEventListener('mfz-auth-changed', loadUser);
-  window.addEventListener('storage', loadUser);
-
-  return () => {
-    window.removeEventListener('mfz-auth-changed', loadUser);
-    window.removeEventListener('storage', loadUser);
-  };
-}, []);
-useEffect(() => {
-  setMobileOpen(false);
-  setSearchOpen(false);
-  setSearchQuery('');
-  setAccountOpen(false);
-}, [location.pathname]);
+  /* =======================================================
+     LOAD AUTH USER
+  ======================================================= */
 
   useEffect(() => {
-    if (!searchOpen && !mobileOpen) {
+    const loadUser = () => {
+      const savedUser =
+        localStorage.getItem('mfz_user');
+
+      if (!savedUser) {
+        setUser(null);
+        return;
+      }
+
+      try {
+        const parsedUser = JSON.parse(
+          savedUser,
+        ) as StoredUser;
+
+        setUser(parsedUser);
+      } catch {
+        localStorage.removeItem(
+          'mfz_user',
+        );
+
+        localStorage.removeItem(
+          'mfz_auth_token',
+        );
+
+        setUser(null);
+      }
+    };
+
+    loadUser();
+
+    window.addEventListener(
+      'mfz-auth-changed',
+      loadUser,
+    );
+
+    window.addEventListener(
+      'storage',
+      loadUser,
+    );
+
+    return () => {
+      window.removeEventListener(
+        'mfz-auth-changed',
+        loadUser,
+      );
+
+      window.removeEventListener(
+        'storage',
+        loadUser,
+      );
+    };
+  }, []);
+
+  /* =======================================================
+     CLOSE PANELS ON ROUTE CHANGE
+  ======================================================= */
+
+  useEffect(() => {
+    setMobileOpen(false);
+    setSearchOpen(false);
+    setSearchQuery('');
+    setAccountOpen(false);
+  }, [location.pathname]);
+
+  /* =======================================================
+     BODY SCROLL LOCK
+  ======================================================= */
+
+  useEffect(() => {
+    const shouldLockScroll =
+      searchOpen || mobileOpen;
+
+    if (shouldLockScroll) {
+      document.body.style.overflow =
+        'hidden';
+    } else {
       document.body.style.overflow = '';
-      return;
     }
 
-    document.body.style.overflow = 'hidden';
-const handleSignOut = () => {
-  localStorage.removeItem('mfz_auth_token');
-  localStorage.removeItem('mfz_user');
-
-  setUser(null);
-  setAccountOpen(false);
-
-  window.dispatchEvent(
-    new Event('mfz-auth-changed'),
-  );
-
-  navigate('/');
-};
     return () => {
       document.body.style.overflow = '';
     };
   }, [searchOpen, mobileOpen]);
 
+  /* =======================================================
+     KEYBOARD SHORTCUTS
+  ======================================================= */
+
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (
+      event: KeyboardEvent,
+    ) => {
       if (event.key === 'Escape') {
         setSearchOpen(false);
         setMobileOpen(false);
+        setAccountOpen(false);
       }
 
       if (
@@ -136,16 +232,29 @@ const handleSignOut = () => {
         event.key.toLowerCase() === 'k'
       ) {
         event.preventDefault();
+
+        setMobileOpen(false);
+        setAccountOpen(false);
         setSearchOpen(true);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener(
+      'keydown',
+      handleKeyDown,
+    );
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener(
+        'keydown',
+        handleKeyDown,
+      );
     };
   }, []);
+
+  /* =======================================================
+     SEARCH RESULTS
+  ======================================================= */
 
   const searchResults = useMemo(() => {
     const normalizedQuery = searchQuery
@@ -160,23 +269,28 @@ const handleSignOut = () => {
 
     return menuItems
       .filter((item) => {
-        return (
-          item.name
-            .toLowerCase()
-            .includes(normalizedQuery) ||
-          item.description
-            .toLowerCase()
-            .includes(normalizedQuery) ||
-          item.category
-            .toLowerCase()
-            .includes(normalizedQuery)
+        const searchableText = [
+          item.name,
+          item.description,
+          item.category,
+        ]
+          .join(' ')
+          .toLowerCase();
+
+        return searchableText.includes(
+          normalizedQuery,
         );
       })
       .slice(0, 8);
   }, [searchQuery]);
 
+  /* =======================================================
+     ACTIONS
+  ======================================================= */
+
   const openSearch = () => {
     setMobileOpen(false);
+    setAccountOpen(false);
     setSearchOpen(true);
   };
 
@@ -186,7 +300,8 @@ const handleSignOut = () => {
   };
 
   const goToSearchResults = () => {
-    const trimmedQuery = searchQuery.trim();
+    const trimmedQuery =
+      searchQuery.trim();
 
     if (!trimmedQuery) {
       navigate('/menu');
@@ -195,22 +310,54 @@ const handleSignOut = () => {
     }
 
     navigate(
-      `/menu?search=${encodeURIComponent(trimmedQuery)}`,
+      `/menu?search=${encodeURIComponent(
+        trimmedQuery,
+      )}`,
     );
 
     closeSearch();
   };
 
-  const goToMenuItem = (itemName: string) => {
+  const goToMenuItem = (
+    itemName: string,
+  ) => {
     navigate(
-      `/menu?search=${encodeURIComponent(itemName)}`,
+      `/menu?search=${encodeURIComponent(
+        itemName,
+      )}`,
     );
 
     closeSearch();
   };
+
+  const handleSignOut = () => {
+    localStorage.removeItem(
+      'mfz_auth_token',
+    );
+
+    localStorage.removeItem('mfz_user');
+
+    setUser(null);
+    setAccountOpen(false);
+    setMobileOpen(false);
+
+    window.dispatchEvent(
+      new Event('mfz-auth-changed'),
+    );
+
+    navigate('/');
+  };
+
+  const userInitial =
+    user?.name?.trim().charAt(0).toUpperCase() ||
+    'U';
 
   return (
     <>
+      {/* ===================================================
+          MAIN NAVBAR
+      =================================================== */}
+
       <header
         className="
           fixed
@@ -224,19 +371,23 @@ const handleSignOut = () => {
         style={{
           height: 'var(--nav-h)',
           background: scrolled
-            ? 'rgba(10,10,10,0.7)'
+            ? 'rgba(10,10,10,0.76)'
             : 'transparent',
           backdropFilter: scrolled
             ? 'blur(16px)'
             : 'none',
+          WebkitBackdropFilter: scrolled
+            ? 'blur(16px)'
+            : 'none',
           borderBottom: scrolled
-            ? `1px solid ${a.accentColor}33`
+            ? `1px solid ${active.accentColor}33`
             : '1px solid transparent',
         }}
       >
         <nav
           className="
             mfz-container
+            relative
             flex
             h-full
             items-center
@@ -248,10 +399,11 @@ const handleSignOut = () => {
             to="/"
             className="
               flex
-              flex-shrink-0
+              shrink-0
               items-center
               gap-2
             "
+            aria-label="MFZ home"
           >
             <span
               className="
@@ -261,8 +413,9 @@ const handleSignOut = () => {
                 md:text-3xl
               "
               style={{
-                color: a.textColor,
-                fontFamily: 'Anton, sans-serif',
+                color: active.textColor,
+                fontFamily:
+                  'Anton, sans-serif',
               }}
             >
               MFZ
@@ -278,7 +431,8 @@ const handleSignOut = () => {
                 sm:block
               "
               style={{
-                color: a.accentColor,
+                color:
+                  active.accentColor,
               }}
             >
               Corndog
@@ -299,7 +453,8 @@ const handleSignOut = () => {
           >
             {navLinks.map((link) => {
               const isActive =
-                location.pathname === link.path;
+                location.pathname ===
+                link.path;
 
               return (
                 <Link
@@ -310,13 +465,16 @@ const handleSignOut = () => {
                     font-bold
                     uppercase
                     tracking-wide
-                    transition-colors
+                    transition-all
+                    hover:opacity-100
                   "
                   style={{
                     color: isActive
-                      ? a.accentColor
-                      : a.textColor,
-                    opacity: isActive ? 1 : 0.7,
+                      ? active.accentColor
+                      : active.textColor,
+                    opacity: isActive
+                      ? 1
+                      : 0.7,
                   }}
                 >
                   {link.label}
@@ -325,44 +483,49 @@ const handleSignOut = () => {
             })}
           </div>
 
-          {/* Actions */}
+          {/* Right actions */}
           <div
             className="
               flex
-              flex-shrink-0
+              shrink-0
               items-center
-              gap-3
+              gap-2
+              sm:gap-3
               md:gap-4
             "
           >
+            {/* Search */}
             <button
               type="button"
               aria-label="Search menu"
               onClick={openSearch}
               className="
+                rounded-full
                 p-1.5
                 transition-transform
                 hover:scale-110
               "
               style={{
-                color: a.textColor,
+                color: active.textColor,
               }}
             >
               <Search size={20} />
             </button>
 
+            {/* Cart */}
             <button
               type="button"
               onClick={open}
-              aria-label="Cart"
+              aria-label="Open cart"
               className="
                 relative
+                rounded-full
                 p-1.5
                 transition-transform
                 hover:scale-110
               "
               style={{
-                color: a.textColor,
+                color: active.textColor,
               }}
             >
               <ShoppingBag size={20} />
@@ -375,23 +538,250 @@ const handleSignOut = () => {
                     -top-1
                     flex
                     h-5
-                    w-5
+                    min-w-5
                     items-center
                     justify-center
                     rounded-full
+                    px-1
                     text-[10px]
                     font-black
                   "
                   style={{
-                    background: a.accentColor,
-                    color: a.onAccent,
+                    background:
+                      active.accentColor,
+                    color:
+                      active.onAccent,
                   }}
                 >
-                  {count}
+                  {count > 99 ? '99+' : count}
                 </span>
               )}
             </button>
 
+            {/* Account */}
+            <div className="relative">
+              {user ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setAccountOpen(
+                        (current) =>
+                          !current,
+                      )
+                    }
+                    aria-label="Open account menu"
+                    aria-expanded={
+                      accountOpen
+                    }
+                    className="
+                      flex
+                      h-9
+                      w-9
+                      items-center
+                      justify-center
+                      rounded-full
+                      font-black
+                      uppercase
+                      transition-transform
+                      hover:scale-110
+                    "
+                    style={{
+                      background:
+                        active.accentColor,
+                      color:
+                        active.onAccent,
+                    }}
+                  >
+                    {userInitial}
+                  </button>
+
+                  <AnimatePresence>
+                    {accountOpen && (
+                      <>
+                        <button
+                          type="button"
+                          aria-label="Close account menu"
+                          onClick={() =>
+                            setAccountOpen(
+                              false,
+                            )
+                          }
+                          className="fixed inset-0 z-[70] cursor-default"
+                        />
+
+                        <motion.div
+                          initial={{
+                            opacity: 0,
+                            y: -8,
+                            scale: 0.96,
+                          }}
+                          animate={{
+                            opacity: 1,
+                            y: 0,
+                            scale: 1,
+                          }}
+                          exit={{
+                            opacity: 0,
+                            y: -8,
+                            scale: 0.96,
+                          }}
+                          transition={{
+                            duration: 0.18,
+                          }}
+                          className="
+                            absolute
+                            right-0
+                            top-[calc(100%+14px)]
+                            z-[80]
+                            w-72
+                            overflow-hidden
+                            rounded-2xl
+                            border
+                            p-3
+                            shadow-2xl
+                            backdrop-blur-xl
+                          "
+                          style={{
+                            background:
+                              'rgba(15,15,15,0.96)',
+                            borderColor: `${active.accentColor}44`,
+                          }}
+                        >
+                          <div
+                            className="rounded-xl p-4"
+                            style={{
+                              background:
+                                'rgba(255,255,255,0.05)',
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="
+                                  flex
+                                  h-11
+                                  w-11
+                                  shrink-0
+                                  items-center
+                                  justify-center
+                                  rounded-full
+                                  font-black
+                                "
+                                style={{
+                                  background:
+                                    active.accentColor,
+                                  color:
+                                    active.onAccent,
+                                }}
+                              >
+                                {userInitial}
+                              </div>
+
+                              <div className="min-w-0">
+                                <p
+                                  className="truncate font-black"
+                                  style={{
+                                    color:
+                                      active.textColor,
+                                  }}
+                                >
+                                  {user.name}
+                                </p>
+
+                                <p
+                                  className="mt-0.5 truncate text-xs"
+                                  style={{
+                                    color:
+                                      active.textColor,
+                                    opacity: 0.55,
+                                  }}
+                                >
+                                  {user.email}
+                                </p>
+                              </div>
+                            </div>
+
+                            <p
+                              className="
+                                mt-4
+                                text-xs
+                                font-bold
+                                uppercase
+                                tracking-widest
+                              "
+                              style={{
+                                color:
+                                  active.accentColor,
+                              }}
+                            >
+                              {user.crunchPoints ??
+                                0}{' '}
+                              Crunch Points
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={
+                              handleSignOut
+                            }
+                            className="
+                              mt-2
+                              flex
+                              w-full
+                              items-center
+                              gap-3
+                              rounded-xl
+                              px-4
+                              py-3
+                              text-left
+                              text-sm
+                              font-bold
+                              transition-colors
+                              hover:bg-white/5
+                            "
+                            style={{
+                              color:
+                                active.textColor,
+                            }}
+                          >
+                            <LogOut size={17} />
+                            Sign Out
+                          </button>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </>
+              ) : (
+                <Link
+                  to="/signin"
+                  aria-label="Sign in"
+                  className="
+                    flex
+                    h-9
+                    w-9
+                    items-center
+                    justify-center
+                    rounded-full
+                    border
+                    transition-transform
+                    hover:scale-110
+                  "
+                  style={{
+                    color:
+                      active.textColor,
+                    borderColor: `${active.textColor}33`,
+                    background:
+                      'rgba(255,255,255,0.05)',
+                  }}
+                >
+                  <User size={19} />
+                </Link>
+              )}
+            </div>
+
+            {/* Order button */}
             <Link
               to="/menu"
               className="
@@ -407,207 +797,68 @@ const handleSignOut = () => {
                 md:block
               "
               style={{
-                background: a.accentColor,
-                color: a.onAccent,
+                background:
+                  active.accentColor,
+                color: active.onAccent,
               }}
             >
               Order Now
             </Link>
 
+            {/* Mobile hamburger */}
             <button
               type="button"
               onClick={() => {
                 setSearchOpen(false);
+                setAccountOpen(false);
                 setMobileOpen(true);
               }}
-              className="p-1.5 lg:hidden"
+              className="
+                rounded-full
+                p-1.5
+                lg:hidden
+              "
               aria-label="Open menu"
               style={{
-                color: a.textColor,
+                color: active.textColor,
               }}
             >
-              <div className="relative">
-  {user ? (
-    <>
-      <button
-        type="button"
-        onClick={() =>
-          setAccountOpen((current) => !current)
-        }
-        aria-label="Open account menu"
-        className="
-          flex
-          h-9
-          w-9
-          items-center
-          justify-center
-          rounded-full
-          font-black
-          uppercase
-          transition-transform
-          hover:scale-110
-        "
-        style={{
-          background: a.accentColor,
-          color: a.onAccent,
-        }}
-      >
-        {user.name?.charAt(0) || 'U'}
-      </button>
-
-      <AnimatePresence>
-        {accountOpen && (
-          <motion.div
-            initial={{
-              opacity: 0,
-              y: -8,
-              scale: 0.96,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-              scale: 1,
-            }}
-            exit={{
-              opacity: 0,
-              y: -8,
-              scale: 0.96,
-            }}
-            className="
-              absolute
-              right-0
-              top-[calc(100%+14px)]
-              z-[90]
-              w-72
-              overflow-hidden
-              rounded-2xl
-              border
-              p-3
-              shadow-2xl
-              backdrop-blur-xl
-            "
-            style={{
-              background: 'rgba(15,15,15,0.95)',
-              borderColor: `${a.accentColor}44`,
-            }}
-          >
-            <div
-              className="rounded-xl p-4"
-              style={{
-                background:
-                  'rgba(255,255,255,0.05)',
-              }}
-            >
-              <p
-                className="truncate font-black"
-                style={{
-                  color: a.textColor,
-                }}
-              >
-                {user.name}
-              </p>
-
-              <p
-                className="mt-1 truncate text-xs"
-                style={{
-                  color: a.textColor,
-                  opacity: 0.55,
-                }}
-              >
-                {user.email}
-              </p>
-
-              <p
-                className="mt-3 text-xs font-bold uppercase tracking-widest"
-                style={{
-                  color: a.accentColor,
-                }}
-              >
-                {user.crunchPoints ?? 0} Crunch Points
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="
-                mt-2
-                flex
-                w-full
-                items-center
-                gap-3
-                rounded-xl
-                px-4
-                py-3
-                text-left
-                text-sm
-                font-bold
-                transition-colors
-                hover:bg-white/5
-              "
-              style={{
-                color: a.textColor,
-              }}
-            >
-              <LogOut size={17} />
-              Sign Out
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  ) : (
-    <Link
-      to="/signin"
-      aria-label="Sign in"
-      className="
-        flex
-        h-9
-        w-9
-        items-center
-        justify-center
-        rounded-full
-        border
-        transition-transform
-        hover:scale-110
-      "
-      style={{
-        color: a.textColor,
-        borderColor: `${a.textColor}33`,
-        background: 'rgba(255,255,255,0.05)',
-      }}
-    >
-      <User size={19} />
-    </Link>
-  )}
-</div>
               <Menu size={24} />
             </button>
           </div>
         </nav>
       </header>
 
-      {/* Search overlay */}
+      {/* ===================================================
+          SEARCH OVERLAY
+      =================================================== */}
+
       <AnimatePresence>
         {searchOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{
+              opacity: 0,
+            }}
+            animate={{
+              opacity: 1,
+            }}
+            exit={{
+              opacity: 0,
+            }}
             className="
-  fixed
-  inset-0
-  z-[80]
-  flex
-  items-start
-  justify-center
-  bg-black/75
-  px-4
-  pt-4
-  backdrop-blur-xl
-  sm:px-6
-  sm:pt-5
-"
+              fixed
+              inset-0
+              z-[90]
+              flex
+              items-start
+              justify-center
+              bg-black/75
+              px-4
+              pt-4
+              backdrop-blur-xl
+              sm:px-6
+              sm:pt-5
+            "
             onClick={closeSearch}
           >
             <motion.div
@@ -638,8 +889,9 @@ const handleSignOut = () => {
                 shadow-2xl
               "
               style={{
-                background: a.bgGradient,
-                borderColor: `${a.accentColor}55`,
+                background:
+                  active.bgGradient,
+                borderColor: `${active.accentColor}55`,
               }}
               onClick={(event) =>
                 event.stopPropagation()
@@ -660,14 +912,15 @@ const handleSignOut = () => {
                   sm:p-5
                 "
                 style={{
-                  borderColor: `${a.textColor}18`,
+                  borderColor: `${active.textColor}18`,
                 }}
               >
                 <Search
                   size={22}
                   className="shrink-0"
                   style={{
-                    color: a.accentColor,
+                    color:
+                      active.accentColor,
                   }}
                 />
 
@@ -676,7 +929,9 @@ const handleSignOut = () => {
                   type="search"
                   value={searchQuery}
                   onChange={(event) =>
-                    setSearchQuery(event.target.value)
+                    setSearchQuery(
+                      event.target.value,
+                    )
                   }
                   placeholder="Search corndogs, combos, drinks..."
                   className="
@@ -689,7 +944,8 @@ const handleSignOut = () => {
                     sm:text-lg
                   "
                   style={{
-                    color: a.textColor,
+                    color:
+                      active.textColor,
                   }}
                 />
 
@@ -709,7 +965,8 @@ const handleSignOut = () => {
                     hover:scale-110
                   "
                   style={{
-                    color: a.textColor,
+                    color:
+                      active.textColor,
                     background:
                       'rgba(255,255,255,0.08)',
                   }}
@@ -718,7 +975,7 @@ const handleSignOut = () => {
                 </button>
               </form>
 
-              {/* Results */}
+              {/* Search results */}
               <div className="max-h-[60vh] overflow-y-auto p-3 sm:p-4">
                 <div
                   className="
@@ -738,7 +995,8 @@ const handleSignOut = () => {
                       tracking-[0.2em]
                     "
                     style={{
-                      color: a.textColor,
+                      color:
+                        active.textColor,
                       opacity: 0.55,
                     }}
                   >
@@ -750,7 +1008,8 @@ const handleSignOut = () => {
                   <span
                     className="hidden text-xs sm:block"
                     style={{
-                      color: a.textColor,
+                      color:
+                        active.textColor,
                       opacity: 0.4,
                     }}
                   >
@@ -774,10 +1033,13 @@ const handleSignOut = () => {
                             y: 0,
                           }}
                           transition={{
-                            delay: index * 0.035,
+                            delay:
+                              index * 0.035,
                           }}
                           onClick={() =>
-                            goToMenuItem(item.name)
+                            goToMenuItem(
+                              item.name,
+                            )
                           }
                           className="
                             group
@@ -814,22 +1076,28 @@ const handleSignOut = () => {
                           >
                             {item.image ? (
                               <img
-                                src={item.image}
-                                alt={item.name}
+                                src={
+                                  item.image
+                                }
+                                alt={
+                                  item.name
+                                }
                                 className="
                                   h-full
                                   w-full
                                   object-contain
                                   p-1.5
                                 "
-                                draggable={false}
+                                draggable={
+                                  false
+                                }
                               />
                             ) : (
                               <Search
                                 size={20}
                                 style={{
                                   color:
-                                    a.accentColor,
+                                    active.accentColor,
                                 }}
                               />
                             )}
@@ -844,7 +1112,8 @@ const handleSignOut = () => {
                                 sm:text-lg
                               "
                               style={{
-                                color: a.textColor,
+                                color:
+                                  active.textColor,
                                 fontFamily:
                                   'Anton, sans-serif',
                               }}
@@ -860,7 +1129,8 @@ const handleSignOut = () => {
                                 sm:text-sm
                               "
                               style={{
-                                color: a.textColor,
+                                color:
+                                  active.textColor,
                                 opacity: 0.55,
                               }}
                             >
@@ -876,7 +1146,8 @@ const handleSignOut = () => {
                               font-black
                             "
                             style={{
-                              color: a.accentColor,
+                              color:
+                                active.accentColor,
                             }}
                           >
                             <span className="hidden sm:inline">
@@ -903,7 +1174,8 @@ const handleSignOut = () => {
                     <h3
                       className="text-2xl font-black"
                       style={{
-                        color: a.textColor,
+                        color:
+                          active.textColor,
                         fontFamily:
                           'Anton, sans-serif',
                       }}
@@ -914,19 +1186,20 @@ const handleSignOut = () => {
                     <p
                       className="mt-2 text-sm"
                       style={{
-                        color: a.textColor,
+                        color:
+                          active.textColor,
                         opacity: 0.55,
                       }}
                     >
-                      Try searching for Potato,
-                      Flaming, Ramen, Combo, Pepsi or
-                      Water.
+                      Try searching for
+                      Potato, Flaming, Ramen,
+                      Combo, Pepsi or Water.
                     </p>
                   </div>
                 )}
               </div>
 
-              {/* Footer action */}
+              {/* Search footer */}
               <div
                 className="
                   flex
@@ -938,23 +1211,26 @@ const handleSignOut = () => {
                   sm:p-5
                 "
                 style={{
-                  borderColor: `${a.textColor}18`,
+                  borderColor: `${active.textColor}18`,
                 }}
               >
                 <span
                   className="hidden text-xs sm:block"
                   style={{
-                    color: a.textColor,
+                    color:
+                      active.textColor,
                     opacity: 0.45,
                   }}
                 >
-                  Press Enter to view all matching
-                  menu items
+                  Press Enter to view all
+                  matching menu items
                 </span>
 
                 <button
                   type="button"
-                  onClick={goToSearchResults}
+                  onClick={
+                    goToSearchResults
+                  }
                   className="
                     ml-auto
                     flex
@@ -968,8 +1244,10 @@ const handleSignOut = () => {
                     uppercase
                   "
                   style={{
-                    background: a.accentColor,
-                    color: a.onAccent,
+                    background:
+                      active.accentColor,
+                    color:
+                      active.onAccent,
                   }}
                 >
                   Search Menu
@@ -981,25 +1259,36 @@ const handleSignOut = () => {
         )}
       </AnimatePresence>
 
-      {/* Mobile full-screen menu */}
+      {/* ===================================================
+          MOBILE MENU
+      =================================================== */}
+
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{
+              opacity: 0,
+            }}
+            animate={{
+              opacity: 1,
+            }}
+            exit={{
+              opacity: 0,
+            }}
             className="
               fixed
               inset-0
-              z-[60]
+              z-[80]
               flex
               flex-col
               lg:hidden
             "
             style={{
-              background: a.bgGradient,
+              background:
+                active.bgGradient,
             }}
           >
+            {/* Mobile menu header */}
             <div
               className="
                 flex
@@ -1011,15 +1300,18 @@ const handleSignOut = () => {
                 height: 'var(--nav-h)',
               }}
             >
-              <span
+              <Link
+                to="/"
                 className="text-2xl font-black"
                 style={{
-                  color: a.textColor,
-                  fontFamily: 'Anton, sans-serif',
+                  color:
+                    active.textColor,
+                  fontFamily:
+                    'Anton, sans-serif',
                 }}
               >
                 MFZ
-              </span>
+              </Link>
 
               <button
                 type="button"
@@ -1028,13 +1320,15 @@ const handleSignOut = () => {
                 }
                 aria-label="Close menu"
                 style={{
-                  color: a.textColor,
+                  color:
+                    active.textColor,
                 }}
               >
                 <X size={28} />
               </button>
             </div>
 
+            {/* Mobile menu content */}
             <div
               className="
                 flex
@@ -1043,9 +1337,117 @@ const handleSignOut = () => {
                 items-center
                 justify-center
                 gap-3
+                overflow-y-auto
                 px-6
+                py-8
               "
             >
+              {/* Mobile account */}
+              {user ? (
+                <div
+                  className="
+                    mb-5
+                    flex
+                    w-full
+                    max-w-sm
+                    items-center
+                    gap-3
+                    rounded-2xl
+                    border
+                    p-4
+                  "
+                  style={{
+                    background:
+                      'rgba(255,255,255,0.06)',
+                    borderColor: `${active.accentColor}33`,
+                  }}
+                >
+                  <div
+                    className="
+                      flex
+                      h-11
+                      w-11
+                      shrink-0
+                      items-center
+                      justify-center
+                      rounded-full
+                      font-black
+                    "
+                    style={{
+                      background:
+                        active.accentColor,
+                      color:
+                        active.onAccent,
+                    }}
+                  >
+                    {userInitial}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className="truncate font-black"
+                      style={{
+                        color:
+                          active.textColor,
+                      }}
+                    >
+                      {user.name}
+                    </p>
+
+                    <p
+                      className="truncate text-xs"
+                      style={{
+                        color:
+                          active.textColor,
+                        opacity: 0.55,
+                      }}
+                    >
+                      {user.email}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={
+                      handleSignOut
+                    }
+                    aria-label="Sign out"
+                    style={{
+                      color:
+                        active.accentColor,
+                    }}
+                  >
+                    <LogOut size={19} />
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  to="/signin"
+                  className="
+                    mb-5
+                    flex
+                    items-center
+                    gap-3
+                    rounded-full
+                    border
+                    px-6
+                    py-3
+                    text-base
+                    font-black
+                    uppercase
+                  "
+                  style={{
+                    color:
+                      active.textColor,
+                    borderColor: `${active.textColor}33`,
+                  }}
+                >
+                  <User size={19} />
+                  Sign In
+                </Link>
+              )}
+
+              {/* Search button */}
               <motion.button
                 type="button"
                 initial={{
@@ -1058,7 +1460,7 @@ const handleSignOut = () => {
                 }}
                 onClick={openSearch}
                 className="
-                  mb-5
+                  mb-3
                   flex
                   items-center
                   gap-3
@@ -1071,51 +1473,58 @@ const handleSignOut = () => {
                   uppercase
                 "
                 style={{
-                  color: a.textColor,
-                  borderColor: `${a.textColor}33`,
+                  color:
+                    active.textColor,
+                  borderColor: `${active.textColor}33`,
                 }}
               >
                 <Search size={19} />
                 Search Menu
               </motion.button>
 
-              {navLinks.map((link, index) => (
-                <motion.div
-                  key={link.path}
-                  initial={{
-                    opacity: 0,
-                    y: 40,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  transition={{
-                    delay: index * 0.06,
-                  }}
-                >
-                  <Link
-                    to={link.path}
-                    className="
-                      text-4xl
-                      font-black
-                      uppercase
-                      tracking-tight
-                    "
-                    style={{
-                      color:
-                        location.pathname === link.path
-                          ? a.accentColor
-                          : a.textColor,
-                      fontFamily:
-                        'Anton, sans-serif',
+              {/* Navigation links */}
+              {navLinks.map(
+                (link, index) => (
+                  <motion.div
+                    key={link.path}
+                    initial={{
+                      opacity: 0,
+                      y: 40,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                    }}
+                    transition={{
+                      delay:
+                        index * 0.06,
                     }}
                   >
-                    {link.label}
-                  </Link>
-                </motion.div>
-              ))}
+                    <Link
+                      to={link.path}
+                      className="
+                        text-4xl
+                        font-black
+                        uppercase
+                        tracking-tight
+                      "
+                      style={{
+                        color:
+                          location.pathname ===
+                          link.path
+                            ? active.accentColor
+                            : active.textColor,
+                        fontFamily:
+                          'Anton, sans-serif',
+                      }}
+                    >
+                      {link.label}
+                    </Link>
+                  </motion.div>
+                ),
+              )}
 
+              {/* Mobile order button */}
               <motion.div
                 initial={{
                   opacity: 0,
@@ -1127,7 +1536,8 @@ const handleSignOut = () => {
                 }}
                 transition={{
                   delay:
-                    navLinks.length * 0.06,
+                    navLinks.length *
+                    0.06,
                 }}
                 className="mt-6"
               >
@@ -1142,8 +1552,10 @@ const handleSignOut = () => {
                     uppercase
                   "
                   style={{
-                    background: a.accentColor,
-                    color: a.onAccent,
+                    background:
+                      active.accentColor,
+                    color:
+                      active.onAccent,
                   }}
                 >
                   Order Now

@@ -1,145 +1,1026 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Check, Truck, Store, MessageCircle } from 'lucide-react';
+import {
+  useMemo,
+  useState,
+  type FormEvent,
+} from 'react';
+import { Link } from 'react-router-dom';
+import {
+  Check,
+  MessageCircle,
+  Store,
+  Truck,
+} from 'lucide-react';
+
 import { useTheme } from '@/context/ThemeContext';
-import { useCart, cartItemKey } from '@/context/CartContext';
+import {
+  cartItemKey,
+  useCart,
+} from '@/context/CartContext';
 import { formatPKR } from '@/data/menu';
 import { branches } from '@/data/branches';
 import { Footer } from '@/components/Footer';
+import { OrderPlacedAnimation } from '@/components/OrderPlacedAnimation';
+
+const MFZ_WHATSAPP_NUMBER = '923051880355';
+
+type OrderMode = 'delivery' | 'pickup';
+
+type PaymentMethod =
+  | 'cod'
+  | 'card'
+  | 'easypaisa'
+  | 'jazzcash';
+
+interface CheckoutForm {
+  name: string;
+  phone: string;
+  address: string;
+  branch: string;
+  instructions: string;
+}
+
+const initialForm: CheckoutForm = {
+  name: '',
+  phone: '',
+  address: '',
+  branch: branches[0]?.name ?? '',
+  instructions: '',
+};
+
+const paymentMethods: Array<{
+  id: PaymentMethod;
+  label: string;
+  available: boolean;
+}> = [
+  {
+    id: 'cod',
+    label: 'Cash on Delivery',
+    available: true,
+  },
+  {
+    id: 'card',
+    label: 'Card — Coming Soon',
+    available: false,
+  },
+  {
+    id: 'easypaisa',
+    label: 'Easypaisa — Coming Soon',
+    available: false,
+  },
+  {
+    id: 'jazzcash',
+    label: 'JazzCash — Coming Soon',
+    available: false,
+  },
+];
 
 export default function CheckoutPage() {
   const { activeProduct } = useTheme();
   const { items, total, clear } = useCart();
-  const a = activeProduct;
-  const navigate = useNavigate();
-  const [mode, setMode] = useState<'delivery' | 'pickup'>('delivery');
-  const [payment, setPayment] = useState('cod');
-  const [placed, setPlaced] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPlaced(true);
-    clear();
-    setTimeout(() => navigate('/'), 3000);
+  const active = activeProduct;
+
+  const [mode, setMode] =
+    useState<OrderMode>('delivery');
+
+  const [payment, setPayment] =
+    useState<PaymentMethod>('cod');
+
+  const [form, setForm] =
+    useState<CheckoutForm>(initialForm);
+
+  const [orderPlaced, setOrderPlaced] =
+    useState(false);
+
+  const [
+    placedOrderNumber,
+    setPlacedOrderNumber,
+  ] = useState('');
+
+  const updateForm = (
+    field: keyof CheckoutForm,
+    value: string,
+  ) => {
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
   };
 
-  if (placed) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-6" style={{ background: a.bgGradient }}>
-        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center">
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring' }} className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center" style={{ background: a.accentColor }}>
-            <Check size={40} style={{ color: a.onAccent }} />
-          </motion.div>
-          <h1 className="text-5xl font-black mb-3" style={{ color: a.textColor, fontFamily: 'Anton, sans-serif' }}>Order Placed!</h1>
-          <p className="text-lg" style={{ color: a.textColor, opacity: 0.7 }}>Your crunch is on the way. Redirecting...</p>
-        </motion.div>
-      </div>
+  const whatsappMessage = useMemo(() => {
+    const orderLines = items.map((item) => {
+      const details = [
+        item.filling,
+        item.sauces?.length
+          ? `Sauces: ${item.sauces.join(', ')}`
+          : '',
+        item.extras?.length
+          ? `Extras: ${item.extras.join(', ')}`
+          : '',
+      ].filter(Boolean);
+
+      return [
+        `${item.quantity}× ${item.name} — ${formatPKR(
+          item.price * item.quantity,
+        )}`,
+        ...details.map((detail) => `   ${detail}`),
+      ].join('\n');
+    });
+
+    const fulfilmentDetails =
+      mode === 'delivery'
+        ? `Delivery address: ${
+            form.address.trim() ||
+            'Not entered yet'
+          }`
+        : `Pickup branch: ${
+            form.branch ||
+            'Not selected yet'
+          }`;
+
+    return encodeURIComponent(
+      [
+        'Assalamualaikum MFZ,',
+        '',
+        'I would like to place an order:',
+        '',
+        ...orderLines,
+        '',
+        `Total: ${formatPKR(total)}`,
+        `Order type: ${
+          mode === 'delivery'
+            ? 'Delivery'
+            : 'Pickup'
+        }`,
+        fulfilmentDetails,
+        `Customer: ${
+          form.name.trim() ||
+          'Not entered yet'
+        }`,
+        `Phone: ${
+          form.phone.trim() ||
+          'Not entered yet'
+        }`,
+        form.instructions.trim()
+          ? `Instructions: ${form.instructions.trim()}`
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n'),
     );
-  }
+  }, [form, items, mode, total]);
+
+  const handleSubmit = (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+
+    if (items.length === 0) {
+      return;
+    }
+
+    if (
+      mode === 'delivery' &&
+      !form.address.trim()
+    ) {
+      return;
+    }
+
+    if (
+      mode === 'pickup' &&
+      !form.branch
+    ) {
+      return;
+    }
+
+    const newOrderNumber = `MFZ-${Date.now()
+      .toString()
+      .slice(-8)}`;
+
+    setPlacedOrderNumber(newOrderNumber);
+    setOrderPlaced(true);
+
+    clear();
+  };
 
   return (
-    <div className="min-h-screen" style={{ background: a.bgColor, paddingTop: 'var(--nav-h)', paddingBottom: '80px' }}>
-      <div className="mfz-container" style={{ maxWidth: '1100px' }}>
-        <h1 className="text-5xl md:text-7xl font-black mb-8" style={{ color: a.textColor, fontFamily: 'Anton, sans-serif' }}>Checkout</h1>
+    <div
+      className="min-h-screen"
+      style={{
+        background: active.bgColor,
+        paddingTop: 'var(--nav-h)',
+      }}
+    >
+      <main className="pb-20">
+        <div
+          className="mfz-container"
+          style={{
+            maxWidth: '1100px',
+          }}
+        >
+          <header className="mb-8 pt-8 md:pt-12">
+            <span
+              className="text-xs font-bold uppercase tracking-[0.3em]"
+              style={{
+                color: active.accentColor,
+              }}
+            >
+              Complete Your Order
+            </span>
 
-        {items.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-lg mb-4" style={{ color: a.textColor, opacity: 0.6 }}>Your cart is empty.</p>
-            <Link to="/menu" className="font-bold uppercase" style={{ color: a.accentColor }}>Browse Menu</Link>
-          </div>
-        ) : (
-          <div className="grid lg:grid-cols-2 gap-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Mode */}
-              <div className="grid grid-cols-2 gap-3">
-                <button type="button" onClick={() => setMode('delivery')} className="py-4 rounded-2xl flex flex-col items-center gap-2 font-bold transition-all" style={{ background: mode === 'delivery' ? a.accentColor : 'rgba(255,255,255,0.08)', color: mode === 'delivery' ? a.onAccent : a.textColor }}>
-                  <Truck size={20} /> Delivery
-                </button>
-                <button type="button" onClick={() => setMode('pickup')} className="py-4 rounded-2xl flex flex-col items-center gap-2 font-bold transition-all" style={{ background: mode === 'pickup' ? a.accentColor : 'rgba(255,255,255,0.08)', color: mode === 'pickup' ? a.onAccent : a.textColor }}>
-                  <Store size={20} /> Pickup
-                </button>
+            <h1
+              className="mt-2 text-5xl font-black leading-none md:text-7xl"
+              style={{
+                color: active.textColor,
+                fontFamily: 'Anton, sans-serif',
+              }}
+            >
+              Checkout
+            </h1>
+
+            <p
+              className="mt-3 max-w-xl text-sm leading-relaxed md:text-base"
+              style={{
+                color: active.textColor,
+                opacity: 0.62,
+              }}
+            >
+              Review your order, choose delivery or
+              pickup and enter your contact details.
+            </p>
+          </header>
+
+          {items.length === 0 ? (
+            <section className="py-20 text-center">
+              <div
+                className="
+                  mx-auto
+                  flex
+                  h-20
+                  w-20
+                  items-center
+                  justify-center
+                  rounded-full
+                "
+                style={{
+                  background: `${active.accentColor}18`,
+                  color: active.accentColor,
+                }}
+              >
+                <Store size={34} />
               </div>
 
-              {/* Fields */}
-              <div className="space-y-4 rounded-3xl p-6" style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${a.accentColor}22` }}>
-                <div>
-                  <label className="text-xs uppercase font-bold mb-2 block" style={{ color: a.textColor, opacity: 0.6 }}>Name</label>
-                  <input required className="w-full px-4 py-3 rounded-xl outline-none" style={{ background: 'rgba(255,255,255,0.08)', color: a.textColor, border: `1px solid ${a.accentColor}33` }} />
-                </div>
-                <div>
-                  <label className="text-xs uppercase font-bold mb-2 block" style={{ color: a.textColor, opacity: 0.6 }}>Phone</label>
-                  <input required type="tel" className="w-full px-4 py-3 rounded-xl outline-none" style={{ background: 'rgba(255,255,255,0.08)', color: a.textColor, border: `1px solid ${a.accentColor}33` }} />
-                </div>
-                {mode === 'pickup' ? (
-                  <div>
-                    <label className="text-xs uppercase font-bold mb-2 block" style={{ color: a.textColor, opacity: 0.6 }}>Branch</label>
-                    <select className="w-full px-4 py-3 rounded-xl outline-none" style={{ background: 'rgba(255,255,255,0.08)', color: a.textColor, border: `1px solid ${a.accentColor}33` }}>
-                      {branches.map((b) => <option key={b.id} style={{ background: a.bgColor }}>{b.name}</option>)}
-                    </select>
-                  </div>
-                ) : (
-                  <div>
-                    <label className="text-xs uppercase font-bold mb-2 block" style={{ color: a.textColor, opacity: 0.6 }}>Address</label>
-                    <textarea required rows={2} className="w-full px-4 py-3 rounded-xl outline-none resize-none" style={{ background: 'rgba(255,255,255,0.08)', color: a.textColor, border: `1px solid ${a.accentColor}33` }} />
-                  </div>
-                )}
-                <div>
-                  <label className="text-xs uppercase font-bold mb-2 block" style={{ color: a.textColor, opacity: 0.6 }}>Instructions</label>
-                  <input className="w-full px-4 py-3 rounded-xl outline-none" placeholder="Optional" style={{ background: 'rgba(255,255,255,0.08)', color: a.textColor, border: `1px solid ${a.accentColor}33` }} />
-                </div>
-              </div>
+              <h2
+                className="mt-6 text-3xl font-black"
+                style={{
+                  color: active.textColor,
+                  fontFamily: 'Anton, sans-serif',
+                }}
+              >
+                Your Cart Is Empty
+              </h2>
 
-              {/* Payment */}
-              <div>
-                <label className="text-xs uppercase font-bold mb-3 block" style={{ color: a.textColor, opacity: 0.6 }}>Payment Method</label>
-                <div className="space-y-2">
-                  {[
-                    { id: 'cod', label: 'Cash on Delivery' },
-                    { id: 'card', label: 'Card (placeholder)' },
-                    { id: 'easypaisa', label: 'Easypaisa (placeholder)' },
-                    { id: 'jazzcash', label: 'JazzCash (placeholder)' },
-                  ].map((p) => (
-                    <button key={p.id} type="button" onClick={() => setPayment(p.id)} className="w-full px-4 py-3 rounded-xl text-left text-sm font-bold flex items-center justify-between transition-all" style={{ background: payment === p.id ? a.accentColor : 'rgba(255,255,255,0.08)', color: payment === p.id ? a.onAccent : a.textColor }}>
-                      {p.label}
-                      {payment === p.id && <Check size={16} />}
+              <p
+                className="mt-2 text-sm"
+                style={{
+                  color: active.textColor,
+                  opacity: 0.58,
+                }}
+              >
+                Add your favourite MFZ items before
+                continuing to checkout.
+              </p>
+
+              <Link
+                to="/menu"
+                className="
+                  mt-6
+                  inline-flex
+                  rounded-full
+                  px-7
+                  py-3
+                  font-black
+                  uppercase
+                  transition-transform
+                  hover:scale-[1.03]
+                "
+                style={{
+                  background: active.accentColor,
+                  color: active.onAccent,
+                }}
+              >
+                Browse Menu
+              </Link>
+            </section>
+          ) : (
+            <div className="grid gap-8 lg:grid-cols-2">
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-7"
+              >
+                {/* Delivery or pickup */}
+                <section>
+                  <label
+                    className="
+                      mb-3
+                      block
+                      text-xs
+                      font-bold
+                      uppercase
+                      tracking-widest
+                    "
+                    style={{
+                      color: active.textColor,
+                      opacity: 0.62,
+                    }}
+                  >
+                    How would you like your order?
+                  </label>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setMode('delivery')
+                      }
+                      className="
+                        flex
+                        min-h-24
+                        flex-col
+                        items-center
+                        justify-center
+                        gap-2
+                        rounded-2xl
+                        border
+                        font-bold
+                        transition-all
+                        hover:scale-[1.02]
+                      "
+                      style={{
+                        background:
+                          mode === 'delivery'
+                            ? active.accentColor
+                            : 'rgba(255,255,255,0.07)',
+                        color:
+                          mode === 'delivery'
+                            ? active.onAccent
+                            : active.textColor,
+                        borderColor:
+                          mode === 'delivery'
+                            ? active.accentColor
+                            : `${active.textColor}18`,
+                      }}
+                    >
+                      <Truck size={22} />
+                      Delivery
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setMode('pickup')
+                      }
+                      className="
+                        flex
+                        min-h-24
+                        flex-col
+                        items-center
+                        justify-center
+                        gap-2
+                        rounded-2xl
+                        border
+                        font-bold
+                        transition-all
+                        hover:scale-[1.02]
+                      "
+                      style={{
+                        background:
+                          mode === 'pickup'
+                            ? active.accentColor
+                            : 'rgba(255,255,255,0.07)',
+                        color:
+                          mode === 'pickup'
+                            ? active.onAccent
+                            : active.textColor,
+                        borderColor:
+                          mode === 'pickup'
+                            ? active.accentColor
+                            : `${active.textColor}18`,
+                      }}
+                    >
+                      <Store size={22} />
+                      Pickup
+                    </button>
+                  </div>
+                </section>
+
+                {/* Customer information */}
+                <section
+                  className="space-y-5 rounded-3xl border p-6"
+                  style={{
+                    background:
+                      'rgba(255,255,255,0.05)',
+                    borderColor: `${active.accentColor}22`,
+                  }}
+                >
+                  <h2
+                    className="text-2xl font-black"
+                    style={{
+                      color: active.textColor,
+                      fontFamily:
+                        'Anton, sans-serif',
+                    }}
+                  >
+                    Customer Details
+                  </h2>
+
+                  <div>
+                    <label
+                      htmlFor="checkout-name"
+                      className="
+                        mb-2
+                        block
+                        text-xs
+                        font-bold
+                        uppercase
+                        tracking-widest
+                      "
+                      style={{
+                        color: active.textColor,
+                        opacity: 0.62,
+                      }}
+                    >
+                      Name
+                    </label>
+
+                    <input
+                      id="checkout-name"
+                      required
+                      type="text"
+                      value={form.name}
+                      onChange={(event) =>
+                        updateForm(
+                          'name',
+                          event.target.value,
+                        )
+                      }
+                      autoComplete="name"
+                      placeholder="Your full name"
+                      className="
+                        w-full
+                        rounded-xl
+                        px-4
+                        py-3.5
+                        outline-none
+                        placeholder:opacity-35
+                      "
+                      style={{
+                        background:
+                          'rgba(255,255,255,0.08)',
+                        color: active.textColor,
+                        border: `1px solid ${active.accentColor}33`,
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="checkout-phone"
+                      className="
+                        mb-2
+                        block
+                        text-xs
+                        font-bold
+                        uppercase
+                        tracking-widest
+                      "
+                      style={{
+                        color: active.textColor,
+                        opacity: 0.62,
+                      }}
+                    >
+                      Phone
+                    </label>
+
+                    <input
+                      id="checkout-phone"
+                      required
+                      type="tel"
+                      value={form.phone}
+                      onChange={(event) =>
+                        updateForm(
+                          'phone',
+                          event.target.value,
+                        )
+                      }
+                      autoComplete="tel"
+                      placeholder="+92 3XX XXXXXXX"
+                      className="
+                        w-full
+                        rounded-xl
+                        px-4
+                        py-3.5
+                        outline-none
+                        placeholder:opacity-35
+                      "
+                      style={{
+                        background:
+                          'rgba(255,255,255,0.08)',
+                        color: active.textColor,
+                        border: `1px solid ${active.accentColor}33`,
+                      }}
+                    />
+                  </div>
+
+                  {mode === 'pickup' ? (
+                    <div>
+                      <label
+                        htmlFor="checkout-branch"
+                        className="
+                          mb-2
+                          block
+                          text-xs
+                          font-bold
+                          uppercase
+                          tracking-widest
+                        "
+                        style={{
+                          color: active.textColor,
+                          opacity: 0.62,
+                        }}
+                      >
+                        Pickup Branch
+                      </label>
+
+                      <select
+                        id="checkout-branch"
+                        required
+                        value={form.branch}
+                        onChange={(event) =>
+                          updateForm(
+                            'branch',
+                            event.target.value,
+                          )
+                        }
+                        className="
+                          w-full
+                          rounded-xl
+                          px-4
+                          py-3.5
+                          outline-none
+                        "
+                        style={{
+                          background:
+                            'rgba(255,255,255,0.08)',
+                          color: active.textColor,
+                          border: `1px solid ${active.accentColor}33`,
+                        }}
+                      >
+                        {branches.map((branch) => (
+                          <option
+                            key={branch.id}
+                            value={branch.name}
+                            style={{
+                              background:
+                                active.bgColor,
+                            }}
+                          >
+                            {branch.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <div>
+                      <label
+                        htmlFor="checkout-address"
+                        className="
+                          mb-2
+                          block
+                          text-xs
+                          font-bold
+                          uppercase
+                          tracking-widest
+                        "
+                        style={{
+                          color: active.textColor,
+                          opacity: 0.62,
+                        }}
+                      >
+                        Delivery Address
+                      </label>
+
+                      <textarea
+                        id="checkout-address"
+                        required
+                        rows={3}
+                        value={form.address}
+                        onChange={(event) =>
+                          updateForm(
+                            'address',
+                            event.target.value,
+                          )
+                        }
+                        autoComplete="street-address"
+                        placeholder="House, street, area and nearby landmark"
+                        className="
+                          w-full
+                          resize-none
+                          rounded-xl
+                          px-4
+                          py-3.5
+                          outline-none
+                          placeholder:opacity-35
+                        "
+                        style={{
+                          background:
+                            'rgba(255,255,255,0.08)',
+                          color: active.textColor,
+                          border: `1px solid ${active.accentColor}33`,
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label
+                      htmlFor="checkout-instructions"
+                      className="
+                        mb-2
+                        block
+                        text-xs
+                        font-bold
+                        uppercase
+                        tracking-widest
+                      "
+                      style={{
+                        color: active.textColor,
+                        opacity: 0.62,
+                      }}
+                    >
+                      Special Instructions
+                    </label>
+
+                    <input
+                      id="checkout-instructions"
+                      type="text"
+                      value={form.instructions}
+                      onChange={(event) =>
+                        updateForm(
+                          'instructions',
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Optional"
+                      className="
+                        w-full
+                        rounded-xl
+                        px-4
+                        py-3.5
+                        outline-none
+                        placeholder:opacity-35
+                      "
+                      style={{
+                        background:
+                          'rgba(255,255,255,0.08)',
+                        color: active.textColor,
+                        border: `1px solid ${active.accentColor}33`,
+                      }}
+                    />
+                  </div>
+                </section>
+
+                {/* Payment */}
+                <section>
+                  <label
+                    className="
+                      mb-3
+                      block
+                      text-xs
+                      font-bold
+                      uppercase
+                      tracking-widest
+                    "
+                    style={{
+                      color: active.textColor,
+                      opacity: 0.62,
+                    }}
+                  >
+                    Payment Method
+                  </label>
+
+                  <div className="space-y-2">
+                    {paymentMethods.map(
+                      (method) => {
+                        const isSelected =
+                          payment === method.id;
+
+                        return (
+                          <button
+                            key={method.id}
+                            type="button"
+                            disabled={
+                              !method.available
+                            }
+                            onClick={() => {
+                              if (
+                                method.available
+                              ) {
+                                setPayment(
+                                  method.id,
+                                );
+                              }
+                            }}
+                            className="
+                              flex
+                              w-full
+                              items-center
+                              justify-between
+                              rounded-xl
+                              border
+                              px-4
+                              py-3.5
+                              text-left
+                              text-sm
+                              font-bold
+                              transition-all
+                              enabled:hover:translate-x-1
+                              disabled:cursor-not-allowed
+                              disabled:opacity-45
+                            "
+                            style={{
+                              background:
+                                isSelected
+                                  ? active.accentColor
+                                  : 'rgba(255,255,255,0.07)',
+                              color: isSelected
+                                ? active.onAccent
+                                : active.textColor,
+                              borderColor:
+                                isSelected
+                                  ? active.accentColor
+                                  : `${active.textColor}16`,
+                            }}
+                          >
+                            {method.label}
+
+                            {isSelected && (
+                              <Check size={17} />
+                            )}
+                          </button>
+                        );
+                      },
+                    )}
+                  </div>
+
+                  <p
+                    className="mt-3 text-xs leading-relaxed"
+                    style={{
+                      color: active.textColor,
+                      opacity: 0.45,
+                    }}
+                  >
+                    Online payments are not connected
+                    yet. Cash on delivery is currently
+                    available.
+                  </p>
+                </section>
+
+                {/* Actions */}
+                <button
+                  type="submit"
+                  className="
+                    w-full
+                    rounded-full
+                    py-4
+                    text-lg
+                    font-black
+                    uppercase
+                    transition-transform
+                    hover:scale-[1.02]
+                  "
+                  style={{
+                    background:
+                      active.accentColor,
+                    color: active.onAccent,
+                  }}
+                >
+                  Place Order
+                </button>
+
+                <a
+                  href={`https://wa.me/${MFZ_WHATSAPP_NUMBER}?text=${whatsappMessage}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="
+                    flex
+                    w-full
+                    items-center
+                    justify-center
+                    gap-2
+                    rounded-full
+                    py-4
+                    text-lg
+                    font-black
+                    uppercase
+                    transition-transform
+                    hover:scale-[1.02]
+                  "
+                  style={{
+                    background: '#25D366',
+                    color: '#ffffff',
+                  }}
+                >
+                  <MessageCircle size={19} />
+                  Order Through WhatsApp
+                </a>
+              </form>
+
+              {/* Order summary */}
+              <aside
+                className="
+                  h-fit
+                  rounded-3xl
+                  border
+                  p-6
+                  lg:sticky
+                  lg:top-24
+                "
+                style={{
+                  background:
+                    'rgba(255,255,255,0.05)',
+                  borderColor: `${active.accentColor}22`,
+                }}
+              >
+                <h2
+                  className="mb-5 text-2xl font-black"
+                  style={{
+                    color: active.textColor,
+                    fontFamily:
+                      'Anton, sans-serif',
+                  }}
+                >
+                  Order Summary
+                </h2>
+
+                <div className="space-y-4">
+                  {items.map((item) => (
+                    <article
+                      key={cartItemKey(item)}
+                      className="
+                        flex
+                        items-start
+                        justify-between
+                        gap-4
+                        rounded-2xl
+                        p-3
+                      "
+                      style={{
+                        background:
+                          'rgba(255,255,255,0.04)',
+                      }}
+                    >
+                      <div className="min-w-0">
+                        <p
+                          className="font-bold"
+                          style={{
+                            color:
+                              active.textColor,
+                          }}
+                        >
+                          {item.quantity}×{' '}
+                          {item.name}
+                        </p>
+
+                        {item.filling && (
+                          <p
+                            className="mt-1 text-xs"
+                            style={{
+                              color:
+                                active.textColor,
+                              opacity: 0.6,
+                            }}
+                          >
+                            {item.filling}
+                          </p>
+                        )}
+
+                        {item.sauces &&
+                          item.sauces.length >
+                            0 && (
+                            <p
+                              className="mt-1 text-xs"
+                              style={{
+                                color:
+                                  active.textColor,
+                                opacity: 0.5,
+                              }}
+                            >
+                              Sauces:{' '}
+                              {item.sauces.join(
+                                ', ',
+                              )}
+                            </p>
+                          )}
+
+                        {item.extras &&
+                          item.extras.length >
+                            0 && (
+                            <p
+                              className="mt-1 text-xs"
+                              style={{
+                                color:
+                                  active.textColor,
+                                opacity: 0.5,
+                              }}
+                            >
+                              Extras:{' '}
+                              {item.extras.join(
+                                ', ',
+                              )}
+                            </p>
+                          )}
+                      </div>
+
+                      <span
+                        className="shrink-0 font-black"
+                        style={{
+                          color:
+                            active.accentColor,
+                        }}
+                      >
+                        {formatPKR(
+                          item.price *
+                            item.quantity,
+                        )}
+                      </span>
+                    </article>
                   ))}
                 </div>
-                <p className="text-xs mt-2" style={{ color: a.textColor, opacity: 0.4 }}>Card, Easypaisa and JazzCash are placeholders. Use WhatsApp checkout for a working order.</p>
-              </div>
 
-              <button type="submit" className="w-full py-4 rounded-full font-black uppercase text-lg" style={{ background: a.accentColor, color: a.onAccent }}>Place Order</button>
-              <a href={`https://wa.me/?text=I'd like to order from MFZ. Total: ${formatPKR(total)}`} target="_blank" rel="noopener" className="w-full py-4 rounded-full font-black uppercase text-lg flex items-center justify-center gap-2" style={{ background: '#25D366', color: '#fff' }}>
-                <MessageCircle size={18} /> Order via WhatsApp
-              </a>
-            </form>
+                <div
+                  className="
+                    mt-5
+                    flex
+                    items-center
+                    justify-between
+                    border-t
+                    pt-5
+                  "
+                  style={{
+                    borderColor:
+                      'rgba(255,255,255,0.1)',
+                  }}
+                >
+                  <span
+                    className="text-lg"
+                    style={{
+                      color: active.textColor,
+                    }}
+                  >
+                    Total
+                  </span>
 
-            {/* Summary */}
-            <div className="rounded-3xl p-6 h-fit lg:sticky lg:top-24" style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${a.accentColor}22` }}>
-              <h3 className="text-xl font-black mb-4" style={{ color: a.textColor, fontFamily: 'Anton, sans-serif' }}>Order Summary</h3>
-              <div className="space-y-3 mb-4">
-                {items.map((item) => (
-                  <div key={cartItemKey(item)} className="flex justify-between text-sm" style={{ color: a.textColor, opacity: 0.8 }}>
-                    <div className="min-w-0">
-                      <p>{item.quantity}× {item.name}</p>
-                      {item.filling && <p className="text-xs opacity-60">{item.filling}</p>}
-                      {item.sauces && item.sauces.length > 0 && <p className="text-xs opacity-50">{item.sauces.join(', ')}</p>}
-                      {item.extras && item.extras.length > 0 && <p className="text-xs opacity-50">+ {item.extras.join(', ')}</p>}
-                    </div>
-                    <span style={{ color: a.accentColor }}>{formatPKR(item.price * item.quantity)}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="pt-4 border-t flex justify-between items-center" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
-                <span className="text-lg" style={{ color: a.textColor }}>Total</span>
-                <span className="text-3xl font-black" style={{ color: a.accentColor, fontFamily: 'Anton, sans-serif' }}>{formatPKR(total)}</span>
-              </div>
+                  <span
+                    className="text-3xl font-black"
+                    style={{
+                      color:
+                        active.accentColor,
+                      fontFamily:
+                        'Anton, sans-serif',
+                    }}
+                  >
+                    {formatPKR(total)}
+                  </span>
+                </div>
+
+                <p
+                  className="mt-3 text-right text-xs"
+                  style={{
+                    color: active.textColor,
+                    opacity: 0.42,
+                  }}
+                >
+                  Delivery charges can be confirmed by
+                  the selected branch.
+                </p>
+              </aside>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </main>
+
       <Footer />
+
+      <OrderPlacedAnimation
+        open={orderPlaced}
+        orderNumber={placedOrderNumber}
+        customerName={form.name}
+        orderType={mode}
+        onClose={() => {
+          setOrderPlaced(false);
+        }}
+      />
     </div>
   );
 }

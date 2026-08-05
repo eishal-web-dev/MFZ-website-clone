@@ -69,15 +69,15 @@ function AppRoutes() {
 export default function App() {
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setLoading(false);
-    }, 2200);
+useEffect(() => {
+  const timer = window.setTimeout(() => {
+    setLoading(false);
+  }, 3000);
 
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, []);
+  return () => {
+    window.clearTimeout(timer);
+  };
+}, []);
 
   return (
     <ErrorBoundary>

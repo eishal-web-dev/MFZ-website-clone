@@ -143,13 +143,45 @@ function MobileProductAtmosphere({
         }}
       />
 
-      <div
-        className="absolute left-1/2 top-[48%] h-[430px] w-[220px] -translate-x-1/2 -translate-y-1/2 blur-2xl"
-        style={{
-          background: `linear-gradient(180deg, ${accentColor}20 0%, ${dominantColor}12 48%, transparent 100%)`,
-          clipPath: 'polygon(34% 0, 66% 0, 100% 100%, 0 100%)',
-        }}
-      />
+     <motion.div
+  className="
+    absolute
+    left-1/2
+    top-[-260px]
+    h-[760px]
+    w-[360px]
+    -translate-x-1/2
+    origin-top
+    blur-[30px]
+  "
+  style={{
+    background: `
+      linear-gradient(
+        180deg,
+        ${accentColor}40 0%,
+        ${accentColor}24 22%,
+        ${dominantColor}14 52%,
+        transparent 92%
+      )
+    `,
+    clipPath:
+      'polygon(40% 0%, 60% 0%, 100% 100%, 0% 100%)',
+    opacity: 0.72,
+  }}
+  animate={
+    reducedMotion
+      ? undefined
+      : {
+          opacity: [0.58, 0.78, 0.58],
+          scaleX: [0.96, 1.04, 0.96],
+        }
+  }
+  transition={{
+    duration: 5,
+    repeat: Infinity,
+    ease: 'easeInOut',
+  }}
+/>
 
       {mobileSparkPositions.map((spark, sparkIndex) => (
         <motion.span
@@ -700,14 +732,18 @@ const { add } = useCart();
               </motion.div>
 
               {/* Product image + cinematic atmosphere */}
-              <div className="absolute right-[-58px] top-[-34px] z-[8] flex h-[520px] w-[76%] items-center justify-center sm:right-[-18px] sm:w-[68%]">
-                <MobileProductAtmosphere
-                  accentColor={product.accentColor}
-                  dominantColor={product.dominantColor}
-                  reducedMotion={reducedMotion}
-                />
+             {/* Cinematic atmosphere behind the complete hero */}
+<div className="pointer-events-none absolute inset-x-[-20px] top-[-160px] z-[2] h-[760px] overflow-hidden">
+  <MobileProductAtmosphere
+    accentColor={product.accentColor}
+    dominantColor={product.dominantColor}
+    reducedMotion={reducedMotion}
+  />
+</div>
 
-                <AnimatePresence
+{/* Product image */}
+<div className="absolute right-[-58px] top-[-34px] z-[8] flex h-[520px] w-[76%] items-center justify-center sm:right-[-18px] sm:w-[68%]">
+  <AnimatePresence
                   mode="popLayout"
                   custom={direction}
                 >

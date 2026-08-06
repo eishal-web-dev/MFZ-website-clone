@@ -27,6 +27,9 @@ const AdminDashboardPage = lazy(
       '@/pages/admin/AdminDashboardPage'
     ),
 );
+const MenuItemPage = lazy(
+  () => import('@/pages/MenuItemPage'),
+);
 const AdminOrdersPage = lazy(
   () => import('@/pages/admin/AdminOrdersPage'),
 );
@@ -65,6 +68,10 @@ function AppRoutes() {
             <Route path="/forgot" element={<AuthPages.ForgotPage />} />
             <Route path="/reset" element={<AuthPages.ResetPage />} />
             <Route path="/verify" element={<AuthPages.VerifyPage />} />
+            <Route
+  path="/menu/:productId"
+  element={<MenuItemPage />}
+/>
             <Route path="*" element={<HomePage />} />
             <Route
   path="/admin/orders"

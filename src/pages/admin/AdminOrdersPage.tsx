@@ -10,7 +10,13 @@ import {
   RefreshCw,
   ShoppingBag,
 } from 'lucide-react';
+import {
+  Menu,
+  X,
+  LayoutDashboard,
+} from 'lucide-react';
 
+import { Link } from 'react-router-dom';
 import { useTheme } from '@/context/ThemeContext';
 import { formatPKR } from '@/data/menu';
 
@@ -169,7 +175,8 @@ export default function AdminOrdersPage() {
     useState<string | null>(null);
 
   const [error, setError] = useState('');
-
+const [adminMenuOpen, setAdminMenuOpen] =
+  useState(false);
   const fetchOrders = useCallback(
     async (manualRefresh = false) => {
       try {
@@ -350,62 +357,74 @@ export default function AdminOrdersPage() {
       }}
     >
       <main className="mfz-container py-8 md:py-12">
-        <header className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-          <div>
-            <span
-              className="text-xs font-bold uppercase tracking-[0.3em]"
-              style={{
-                color: active.accentColor,
-              }}
-            >
-              MFZ Management
-            </span>
+<header className="mb-8 flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+  <div className="flex items-start gap-4">
+    <button
+      type="button"
+      onClick={() => setAdminMenuOpen(true)}
+      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border transition-transform hover:scale-105"
+      style={{
+        background: `${active.accentColor}15`,
+        borderColor: `${active.accentColor}55`,
+        color: active.accentColor,
+      }}
+    >
+      <Menu size={22} />
+    </button>
 
-            <h1
-              className="mt-2 text-5xl font-black md:text-7xl"
-              style={{
-                color: active.textColor,
-                fontFamily: 'Anton, sans-serif',
-              }}
-            >
-              Orders
-            </h1>
+    <div>
+      <span
+        className="text-xs font-bold uppercase tracking-[0.3em]"
+        style={{
+          color: active.accentColor,
+        }}
+      >
+        MFZ Management
+      </span>
 
-            <p
-              className="mt-3 text-sm md:text-base"
-              style={{
-                color: active.textColor,
-                opacity: 0.6,
-              }}
-            >
-              Open an order to view its details and
-              update order or payment status.
-            </p>
-          </div>
+      <h1
+        className="mt-2 text-5xl font-black md:text-7xl"
+        style={{
+          color: active.textColor,
+          fontFamily: 'Anton, sans-serif',
+        }}
+      >
+        Orders
+      </h1>
 
-          <button
-            type="button"
-            onClick={() => {
-              void fetchOrders(true);
-            }}
-            disabled={refreshing}
-            className="flex w-fit items-center gap-2 rounded-full border px-5 py-3 text-sm font-black uppercase"
-            style={{
-              color: active.accentColor,
-              borderColor: `${active.accentColor}55`,
-              background: `${active.accentColor}12`,
-            }}
-          >
-            <RefreshCw
-              size={17}
-              className={
-                refreshing ? 'animate-spin' : ''
-              }
-            />
+      <p
+        className="mt-3 text-sm md:text-base"
+        style={{
+          color: active.textColor,
+          opacity: 0.6,
+        }}
+      >
+        Open an order to view its details and update order or payment status.
+      </p>
+    </div>
+  </div>
 
-            Refresh
-          </button>
-        </header>
+  <button
+    type="button"
+    onClick={() => {
+      void fetchOrders(true);
+    }}
+    disabled={refreshing}
+    className="flex w-fit items-center gap-2 rounded-full border px-5 py-3 text-sm font-black uppercase"
+    style={{
+      color: active.accentColor,
+      borderColor: `${active.accentColor}55`,
+      background: `${active.accentColor}12`,
+    }}
+  >
+    <RefreshCw
+      size={17}
+      className={refreshing ? 'animate-spin' : ''}
+    />
+
+    Refresh
+  </button>
+</header>
 
         {error && (
           <div className="mb-6 flex gap-3 rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-red-200">
@@ -830,6 +849,92 @@ export default function AdminOrdersPage() {
           </div>
         )}
       </main>
+      {adminMenuOpen && (
+  <>
+    <button
+      type="button"
+      onClick={() => setAdminMenuOpen(false)}
+      className="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm"
+    />
+
+    <aside
+      className="fixed bottom-0 left-0 top-0 z-[100] flex w-full max-w-[390px] flex-col border-r shadow-2xl"
+      style={{
+        background: active.bgColor,
+        borderColor: `${active.accentColor}35`,
+      }}
+    >
+      <div
+        className="flex items-center justify-between border-b p-5"
+        style={{
+          borderColor: 'rgba(255,255,255,0.08)',
+        }}
+      >
+        <div>
+          <p
+            className="text-xs font-bold uppercase tracking-[0.25em]"
+            style={{
+              color: active.accentColor,
+            }}
+          >
+            MFZ Management
+          </p>
+
+          <h2
+            className="mt-1 text-3xl font-black"
+            style={{
+              color: active.textColor,
+              fontFamily: 'Anton, sans-serif',
+            }}
+          >
+            Admin Menu
+          </h2>
+        </div>
+
+        <button
+          onClick={() => setAdminMenuOpen(false)}
+          className="flex h-11 w-11 items-center justify-center rounded-full"
+          style={{
+            background: 'rgba(255,255,255,0.08)',
+            color: active.textColor,
+          }}
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      <nav className="flex-1 space-y-3 p-5">
+        <Link
+          to="/admin"
+          onClick={() => setAdminMenuOpen(false)}
+          className="flex items-center gap-3 rounded-2xl border px-5 py-4 font-black uppercase"
+          style={{
+            background: `${active.accentColor}18`,
+            borderColor: `${active.accentColor}35`,
+            color: active.accentColor,
+          }}
+        >
+          <LayoutDashboard size={18} />
+          Dashboard
+        </Link>
+
+        <Link
+          to="/admin/orders"
+          onClick={() => setAdminMenuOpen(false)}
+          className="flex items-center gap-3 rounded-2xl border px-5 py-4 font-black uppercase"
+          style={{
+            background: 'rgba(255,255,255,0.05)',
+            borderColor: `${active.textColor}18`,
+            color: active.textColor,
+          }}
+        >
+          <ShoppingBag size={18} />
+          Orders
+        </Link>
+      </nav>
+    </aside>
+  </>
+)}
     </div>
   );
 }

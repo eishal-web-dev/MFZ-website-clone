@@ -5,12 +5,12 @@ import { menuItems, menuCategories, formatPKR, type MenuItem } from '@/data/menu
 import { useTheme } from '@/context/ThemeContext';
 import { useCart } from '@/context/CartContext';
 import { Footer } from '@/components/Footer';
-
+import { useNavigate } from 'react-router-dom';
 export default function MenuPage() {
   const { activeProduct } = useTheme();
   const { add } = useCart();
   const a = activeProduct;
-
+const navigate = useNavigate();
  const [category, setCategory] = useState('All');
   const [query, setQuery] = useState('');
   const [spiceFilter, setSpiceFilter] = useState<number | null>(null);
@@ -227,88 +227,636 @@ export default function MenuPage() {
       </div>
 
       {/* Detail overlay */}
-      <AnimatePresence>
-        {detail && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] flex items-center justify-center p-6 bg-black/70 backdrop-blur-sm"
-          onClick={() => { setDetail(null); setDetailQty(1); }}
-        >
-          <motion.div
-            initial={{ scale: 0.9, y: 30 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.9, y: 30 }}
-            className="max-w-lg w-full rounded-3xl p-8 relative"
-            style={{ background: a.bgGradient, border: `1px solid ${a.accentColor}` }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button onClick={() => { setDetail(null); setDetailQty(1); }} className="absolute top-4 right-4" style={{ color: a.textColor }} aria-label="Close"><X size={22} /></button>
-            <div
-  className="mb-6 flex h-[260px] items-center justify-center overflow-hidden rounded-2xl"
-  style={{
-    background:
-      'radial-gradient(circle at center, rgba(255,255,255,0.14), rgba(255,255,255,0.03))',
-  }}
->
-  {detail.image ? (
-    <img
-      src={detail.image}
-      alt={detail.name}
-      className="h-full w-full object-contain p-3"
-      draggable={false}
-    />
-  ) : (
-    <span
-      className="text-sm"
+{/* Full-screen product details */}
+<AnimatePresence>
+  {detail && (
+    <motion.div
+      initial={{
+        opacity: 0,
+      }}
+      animate={{
+        opacity: 1,
+      }}
+      exit={{
+        opacity: 0,
+      }}
+      className="
+        fixed
+        inset-0
+        z-[100]
+        overflow-y-auto
+      "
       style={{
-        color: a.textColor,
-        opacity: 0.5,
+        background: a.bgColor,
       }}
     >
-      Image coming soon
-    </span>
-  )}
-</div>
-            <h2 className="text-4xl font-black mb-2" style={{ color: a.textColor, fontFamily: 'Anton, sans-serif' }}>{detail.name}</h2>
-            <p className="text-base mb-4" style={{ color: a.textColor, opacity: 0.8 }}>{detail.description}</p>
-            <div className="flex gap-2 mb-6">
-              {detail.hasCheese && <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(255,255,255,0.1)', color: a.textColor }}>Cheese</span>}
-              {detail.hasSausage && <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(255,255,255,0.1)', color: a.textColor }}>Sausage</span>}
-              <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(255,255,255,0.1)', color: a.textColor }}>Spice {detail.spiceLevel}</span>
+      <motion.div
+        initial={{
+          x: '100%',
+        }}
+        animate={{
+          x: 0,
+        }}
+        exit={{
+          x: '100%',
+        }}
+        transition={{
+          type: 'spring',
+          damping: 28,
+          stiffness: 260,
+        }}
+        className="min-h-screen"
+      >
+        {/* Product header */}
+        <div
+          className="
+            sticky
+            top-0
+            z-20
+            flex
+            items-center
+            justify-between
+            border-b
+            px-4
+            py-4
+            backdrop-blur-xl
+            md:px-8
+          "
+          style={{
+            background: `${a.bgColor}E6`,
+            borderColor:
+              'rgba(255,255,255,0.08)',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setDetail(null);
+              setDetailQty(1);
+            }}
+            className="
+              flex
+              h-11
+              w-11
+              items-center
+              justify-center
+              rounded-full
+              transition-transform
+              hover:scale-105
+            "
+            style={{
+              background:
+                'rgba(255,255,255,0.08)',
+              color: a.textColor,
+            }}
+            aria-label="Close product details"
+          >
+            <X size={21} />
+          </button>
+
+          <p
+            className="
+              text-xs
+              font-black
+              uppercase
+              tracking-[0.25em]
+            "
+            style={{
+              color: a.accentColor,
+            }}
+          >
+            Product Details
+          </p>
+
+          <button
+            type="button"
+            onClick={() =>
+              toggleFav(detail.id)
+            }
+            className="
+              flex
+              h-11
+              w-11
+              items-center
+              justify-center
+              rounded-full
+              transition-transform
+              hover:scale-105
+            "
+            style={{
+              background:
+                'rgba(255,255,255,0.08)',
+              color: favourites.includes(
+                detail.id,
+              )
+                ? a.accentColor
+                : a.textColor,
+            }}
+            aria-label="Favourite product"
+          >
+            <Heart
+              size={20}
+              fill={
+                favourites.includes(
+                  detail.id,
+                )
+                  ? a.accentColor
+                  : 'none'
+              }
+            />
+          </button>
+        </div>
+
+        <div
+          className="
+            mx-auto
+            grid
+            min-h-[calc(100vh-76px)]
+            max-w-7xl
+            gap-8
+            px-4
+            py-6
+            md:px-8
+            md:py-10
+            lg:grid-cols-2
+            lg:items-center
+          "
+        >
+          {/* Product image */}
+          <section
+            className="
+              relative
+              flex
+              min-h-[360px]
+              items-center
+              justify-center
+              overflow-hidden
+              rounded-[2rem]
+              border
+              md:min-h-[520px]
+            "
+            style={{
+              background:
+                'radial-gradient(circle at center, rgba(255,255,255,0.16), rgba(255,255,255,0.025))',
+              borderColor: `${a.accentColor}25`,
+            }}
+          >
+            {detail.image ? (
+              <motion.img
+                initial={{
+                  opacity: 0,
+                  scale: 0.85,
+                  rotate: -4,
+                }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                  rotate: 0,
+                }}
+                transition={{
+                  delay: 0.15,
+                  duration: 0.55,
+                }}
+                src={detail.image}
+                alt={detail.name}
+                className="
+                  h-[330px]
+                  w-full
+                  object-contain
+                  p-5
+                  md:h-[500px]
+                  md:p-8
+                "
+                draggable={false}
+              />
+            ) : (
+              <p
+                style={{
+                  color: a.textColor,
+                  opacity: 0.5,
+                }}
+              >
+                Image coming soon
+              </p>
+            )}
+
+            {detail.popular && (
+              <span
+                className="
+                  absolute
+                  left-5
+                  top-5
+                  rounded-full
+                  px-4
+                  py-2
+                  text-xs
+                  font-black
+                  uppercase
+                  tracking-wide
+                "
+                style={{
+                  background:
+                    a.accentColor,
+                  color: a.onAccent,
+                }}
+              >
+                Popular
+              </span>
+            )}
+          </section>
+
+          {/* Product information */}
+          <section className="pb-28 lg:pb-0">
+            <p
+              className="
+                text-xs
+                font-black
+                uppercase
+                tracking-[0.3em]
+              "
+              style={{
+                color: a.accentColor,
+              }}
+            >
+              {detail.category}
+            </p>
+
+            <h1
+              className="
+                mt-3
+                text-5xl
+                font-black
+                leading-none
+                md:text-7xl
+              "
+              style={{
+                color: a.textColor,
+                fontFamily:
+                  'Anton, sans-serif',
+              }}
+            >
+              {detail.name}
+            </h1>
+
+            <p
+              className="
+                mt-5
+                max-w-xl
+                text-base
+                leading-relaxed
+                md:text-lg
+              "
+              style={{
+                color: a.textColor,
+                opacity: 0.68,
+              }}
+            >
+              {detail.description}
+            </p>
+
+            {/* Product badges */}
+            <div className="mt-6 flex flex-wrap gap-2">
+              {detail.hasCheese && (
+                <span
+                  className="
+                    rounded-full
+                    px-4
+                    py-2
+                    text-xs
+                    font-bold
+                  "
+                  style={{
+                    background:
+                      'rgba(255,255,255,0.08)',
+                    color: a.textColor,
+                  }}
+                >
+                  Cheese
+                </span>
+              )}
+
+              {detail.hasSausage && (
+                <span
+                  className="
+                    rounded-full
+                    px-4
+                    py-2
+                    text-xs
+                    font-bold
+                  "
+                  style={{
+                    background:
+                      'rgba(255,255,255,0.08)',
+                    color: a.textColor,
+                  }}
+                >
+                  Sausage
+                </span>
+              )}
+
+              <span
+                className="
+                  flex
+                  items-center
+                  gap-1
+                  rounded-full
+                  px-4
+                  py-2
+                  text-xs
+                  font-bold
+                "
+                style={{
+                  background:
+                    'rgba(255,255,255,0.08)',
+                  color: a.textColor,
+                }}
+              >
+                <Flame
+                  size={13}
+                  color={a.accentColor}
+                  fill={a.accentColor}
+                />
+                Spice {detail.spiceLevel}
+              </span>
             </div>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <button onClick={() => setDetailQty((q) => Math.max(1, q - 1))} className="p-2 rounded-full" style={{ background: 'rgba(255,255,255,0.1)', color: a.textColor }} aria-label="Decrease"><Minus size={16} /></button>
-                <span className="text-2xl font-black w-8 text-center" style={{ color: a.textColor }}>{detailQty}</span>
-                <button onClick={() => setDetailQty((q) => q + 1)} className="p-2 rounded-full" style={{ background: 'rgba(255,255,255,0.1)', color: a.textColor }} aria-label="Increase"><Plus size={16} /></button>
+
+            {/* Price */}
+            <div
+              className="
+                mt-8
+                rounded-3xl
+                border
+                p-5
+              "
+              style={{
+                background:
+                  'rgba(255,255,255,0.045)',
+                borderColor: `${a.accentColor}25`,
+              }}
+            >
+              <p
+                className="
+                  text-xs
+                  font-black
+                  uppercase
+                  tracking-wider
+                "
+                style={{
+                  color: a.textColor,
+                  opacity: 0.5,
+                }}
+              >
+                Total Price
+              </p>
+
+              <p
+                className="
+                  mt-2
+                  text-4xl
+                  font-black
+                "
+                style={{
+                  color: a.accentColor,
+                  fontFamily:
+                    'Anton, sans-serif',
+                }}
+              >
+                {formatPKR(
+                  detail.price *
+                    detailQty,
+                )}
+              </p>
+            </div>
+
+            {/* Quantity */}
+            <div className="mt-8">
+              <p
+                className="
+                  text-xs
+                  font-black
+                  uppercase
+                  tracking-wider
+                "
+                style={{
+                  color: a.textColor,
+                  opacity: 0.55,
+                }}
+              >
+                Quantity
+              </p>
+
+              <div className="mt-3 flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDetailQty(
+                      (quantity) =>
+                        Math.max(
+                          1,
+                          quantity - 1,
+                        ),
+                    )
+                  }
+                  className="
+                    flex
+                    h-12
+                    w-12
+                    items-center
+                    justify-center
+                    rounded-full
+                    border
+                    transition-transform
+                    hover:scale-105
+                  "
+                  style={{
+                    background:
+                      'rgba(255,255,255,0.06)',
+                    borderColor: `${a.accentColor}30`,
+                    color: a.textColor,
+                  }}
+                  aria-label="Decrease quantity"
+                >
+                  <Minus size={18} />
+                </button>
+
+                <span
+                  className="
+                    min-w-12
+                    text-center
+                    text-3xl
+                    font-black
+                  "
+                  style={{
+                    color: a.textColor,
+                  }}
+                >
+                  {detailQty}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDetailQty(
+                      (quantity) =>
+                        quantity + 1,
+                    )
+                  }
+                  className="
+                    flex
+                    h-12
+                    w-12
+                    items-center
+                    justify-center
+                    rounded-full
+                    border
+                    transition-transform
+                    hover:scale-105
+                  "
+                  style={{
+                    background:
+                      'rgba(255,255,255,0.06)',
+                    borderColor: `${a.accentColor}30`,
+                    color: a.textColor,
+                  }}
+                  aria-label="Increase quantity"
+                >
+                  <Plus size={18} />
+                </button>
               </div>
-              <span className="text-3xl font-black" style={{ color: a.accentColor }}>{formatPKR(detail.price * detailQty)}</span>
             </div>
-            <div className="flex gap-3">
+
+            {/* Desktop actions */}
+            <div className="mt-10 hidden gap-3 sm:flex">
               <button
-                onClick={() => { add({ id: detail.id, name: detail.name, price: detail.price }, detailQty); setDetail(null); setDetailQty(1); }}
-                className="flex-1 py-4 rounded-full font-black uppercase"
-                style={{ background: a.accentColor, color: a.onAccent }}
+                type="button"
+                onClick={() => {
+                  add(
+                    {
+                      id: detail.id,
+                      name: detail.name,
+                      price:
+                        detail.price,
+                    },
+                    detailQty,
+                  );
+
+                  setDetail(null);
+                  setDetailQty(1);
+                }}
+                className="
+                  flex-1
+                  rounded-full
+                  py-4
+                  text-base
+                  font-black
+                  uppercase
+                  transition-transform
+                  hover:scale-[1.02]
+                "
+                style={{
+                  background:
+                    a.accentColor,
+                  color: a.onAccent,
+                }}
               >
                 Add to Cart
               </button>
+
               <a
-                href={`https://wa.me/?text=I'd like to order ${detail.name} (${formatPKR(detail.price)})`}
+                href={`https://wa.me/?text=${encodeURIComponent(
+                  `I'd like to order ${detailQty} × ${detail.name}. Total: ${formatPKR(
+                    detail.price *
+                      detailQty,
+                  )}`,
+                )}`}
                 target="_blank"
-                rel="noopener"
-                className="px-5 py-4 rounded-full flex items-center justify-center"
-                style={{ background: '#25D366', color: '#fff' }}
-                aria-label="Order on WhatsApp"
+                rel="noopener noreferrer"
+                className="
+                  flex
+                  h-14
+                  w-14
+                  items-center
+                  justify-center
+                  rounded-full
+                  transition-transform
+                  hover:scale-105
+                "
+                style={{
+                  background: '#25D366',
+                  color: '#ffffff',
+                }}
+                aria-label="Order via WhatsApp"
               >
-                <MessageCircle size={20} />
+                <MessageCircle size={21} />
               </a>
             </div>
-          </motion.div>
-        </motion.div>
-        )}
-      </AnimatePresence>
+          </section>
+        </div>
+
+        {/* Mobile fixed add button */}
+        <div
+          className="
+            fixed
+            bottom-0
+            left-0
+            right-0
+            z-30
+            border-t
+            p-4
+            backdrop-blur-xl
+            sm:hidden
+          "
+          style={{
+            background: `${a.bgColor}F2`,
+            borderColor:
+              'rgba(255,255,255,0.08)',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              add(
+                {
+                  id: detail.id,
+                  name: detail.name,
+                  price: detail.price,
+                },
+                detailQty,
+              );
+
+              setDetail(null);
+              setDetailQty(1);
+            }}
+            className="
+              flex
+              w-full
+              items-center
+              justify-between
+              rounded-full
+              px-6
+              py-4
+              font-black
+              uppercase
+            "
+            style={{
+              background: a.accentColor,
+              color: a.onAccent,
+            }}
+          >
+            <span>Add to Cart</span>
+
+            <span>
+              {formatPKR(
+                detail.price *
+                  detailQty,
+              )}
+            </span>
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
       <Footer />
     </div>

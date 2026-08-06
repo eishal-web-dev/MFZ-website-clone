@@ -15,7 +15,6 @@ import {
   Flame,
   GripHorizontal,
   Plus,
-  ShoppingBag,
 } from 'lucide-react';
 
 import { products } from '@/data/products';
@@ -98,6 +97,120 @@ const contentItem = {
     },
   },
 };
+
+
+const mobileSparkPositions = [
+  { left: '9%', top: '18%', size: 5, delay: 0.1, duration: 3.8 },
+  { left: '20%', top: '8%', size: 3, delay: 0.8, duration: 4.4 },
+  { left: '80%', top: '10%', size: 4, delay: 0.3, duration: 3.6 },
+  { left: '93%', top: '24%', size: 3, delay: 1.2, duration: 4.1 },
+  { left: '4%', top: '45%', size: 4, delay: 0.5, duration: 4.6 },
+  { left: '96%', top: '50%', size: 5, delay: 0.9, duration: 3.9 },
+  { left: '12%', top: '73%', size: 3, delay: 1.4, duration: 4.2 },
+  { left: '86%', top: '78%', size: 4, delay: 0.2, duration: 4.8 },
+  { left: '28%', top: '91%', size: 4, delay: 1.0, duration: 4.0 },
+  { left: '70%', top: '94%', size: 3, delay: 0.6, duration: 3.7 },
+];
+
+function MobileProductAtmosphere({
+  accentColor,
+  dominantColor,
+  reducedMotion,
+}: {
+  accentColor: string;
+  dominantColor: string;
+  reducedMotion: boolean;
+}) {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <motion.div
+        className="absolute left-1/2 top-1/2 h-[410px] w-[260px] -translate-x-1/2 -translate-y-1/2 rounded-[50%] blur-[46px]"
+        style={{
+          background: `radial-gradient(ellipse at center, ${accentColor}45 0%, ${dominantColor}25 42%, transparent 76%)`,
+        }}
+        animate={
+          reducedMotion
+            ? undefined
+            : {
+                scale: [0.96, 1.06, 0.96],
+                opacity: [0.58, 0.86, 0.58],
+              }
+        }
+        transition={{
+          duration: 5.2,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+      />
+
+      <div
+        className="absolute left-1/2 top-[48%] h-[430px] w-[220px] -translate-x-1/2 -translate-y-1/2 blur-2xl"
+        style={{
+          background: `linear-gradient(180deg, ${accentColor}20 0%, ${dominantColor}12 48%, transparent 100%)`,
+          clipPath: 'polygon(34% 0, 66% 0, 100% 100%, 0 100%)',
+        }}
+      />
+
+      {mobileSparkPositions.map((spark, sparkIndex) => (
+        <motion.span
+          key={sparkIndex}
+          className="absolute rounded-full"
+          style={{
+            left: spark.left,
+            top: spark.top,
+            width: spark.size,
+            height: spark.size,
+            background: sparkIndex % 3 === 0 ? '#fff2a8' : accentColor,
+            boxShadow: `0 0 ${spark.size * 3}px ${accentColor}`,
+          }}
+          animate={
+            reducedMotion
+              ? undefined
+              : {
+                  y: [8, -14, 8],
+                  x: [0, sparkIndex % 2 === 0 ? 7 : -7, 0],
+                  opacity: [0.18, 0.95, 0.18],
+                  scale: [0.65, 1.25, 0.65],
+                }
+          }
+          transition={{
+            duration: spark.duration,
+            repeat: Infinity,
+            delay: spark.delay,
+            ease: 'easeInOut',
+          }}
+        />
+      ))}
+
+      {[0, 1, 2].map((smokeIndex) => (
+        <motion.div
+          key={smokeIndex}
+          className="absolute left-1/2 top-[7%] h-28 w-16 rounded-full blur-2xl"
+          style={{
+            marginLeft: (smokeIndex - 1) * 28,
+            background: 'rgba(255,255,255,0.13)',
+          }}
+          animate={
+            reducedMotion
+              ? undefined
+              : {
+                  y: [18, -58],
+                  x: [0, smokeIndex === 1 ? 8 : -8],
+                  opacity: [0, 0.16, 0],
+                  scale: [0.7, 1.35],
+                }
+          }
+          transition={{
+            duration: 4.8 + smokeIndex * 0.7,
+            repeat: Infinity,
+            delay: smokeIndex * 1.1,
+            ease: 'easeOut',
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 /* =========================================================
    HERO SLIDER
@@ -484,23 +597,22 @@ const { add } = useCart();
     >
       <div className="grain" />
 
-     <div className="hidden lg:block">
-  <ParticleCanvas
-    product={product}
-    reduced={reducedMotion}
-  />
-</div>
-
+      <div className="pointer-events-none absolute inset-0 z-[1] hidden lg:block">
+        <ParticleCanvas
+          product={product}
+          reduced={reducedMotion}
+        />
+      </div>
       {/* ===================================================
           MOBILE APP-STYLE HERO
       =================================================== */}
 
-     <div
-  className="relative z-10 min-h-[100dvh] lg:hidden"
-  style={{
-    paddingTop: 'var(--nav-h-mobile)',
-  }}
->
+      <div
+        className="relative z-10 min-h-[100dvh] lg:hidden"
+        style={{
+          paddingTop: 'var(--nav-h-mobile)',
+        }}
+      >
         {/* Decorative glow */}
         <motion.div
           className="pointer-events-none absolute right-[-130px] top-16 h-[330px] w-[330px] rounded-full blur-[105px]"
@@ -526,7 +638,7 @@ const { add } = useCart();
           }}
         />
 
-        <div className="px-5 pb-32 pt-5 sm:px-7">
+        <div className="relative px-5 pb-12 pt-5 sm:px-7">
           {/* Mobile top actions */}
           <div className="flex items-center justify-between">
             <div
@@ -550,7 +662,7 @@ const { add } = useCart();
               initial="hidden"
               animate="show"
               exit="exit"
-              className="relative mt-7 min-h-[510px]"
+              className="relative mt-3 min-h-[520px]"
             >
               {/* Product index */}
               <motion.div
@@ -587,8 +699,14 @@ const { add } = useCart();
                 </span>
               </motion.div>
 
-              {/* Product image */}
-              <div className="absolute right-[-22px] top-5 flex h-[390px] w-[55%] items-center justify-center sm:right-0 sm:w-[52%]">
+              {/* Product image + cinematic atmosphere */}
+              <div className="absolute right-[-58px] top-[-34px] z-[8] flex h-[520px] w-[76%] items-center justify-center sm:right-[-18px] sm:w-[68%]">
+                <MobileProductAtmosphere
+                  accentColor={product.accentColor}
+                  dominantColor={product.dominantColor}
+                  reducedMotion={reducedMotion}
+                />
+
                 <AnimatePresence
                   mode="popLayout"
                   custom={direction}
@@ -596,53 +714,50 @@ const { add } = useCart();
                   <motion.div
                     key={`mobile-product-${index}`}
                     custom={direction}
-                    variants={
-                      mobileSlideVariants
-                    }
+                    variants={mobileSlideVariants}
                     initial="enter"
                     animate="center"
                     exit="exit"
-                    className="h-full w-full"
+                    className="relative z-10 h-full w-full"
                   >
                     <motion.div
                       animate={
                         reducedMotion
                           ? undefined
                           : {
-                              y: [
-                                0,
-                                -9,
-                                0,
-                              ],
+                              y: [0, -10, 0],
+                              rotate: [-1, 1, -1],
                             }
                       }
                       transition={{
-                        duration: 4,
+                        duration: 5.2,
                         repeat: Infinity,
                         ease: 'easeInOut',
                       }}
-                      className="h-full w-full"
+                      className="relative h-full w-full"
                     >
                       {product.image ? (
                         <img
                           src={product.image}
                           alt={product.name}
                           draggable={false}
+                          decoding="async"
+                          fetchPriority="high"
                           className="h-full w-full object-contain"
                           style={{
                             filter: `
                               drop-shadow(
-                                0 24px 34px
-                                ${product.dominantColor}50
+                                0 24px 32px
+                                ${product.dominantColor}58
                               )
                               drop-shadow(
-                                0 0 18px
-                                ${product.accentColor}35
+                                0 0 22px
+                                ${product.accentColor}42
                               )
                             `,
                             transform: `
                               rotate(${product.visual.rotation}deg)
-                              scale(${product.visual.scale})
+                              scale(${product.visual.scale * 1.08})
                             `,
                           }}
                         />
@@ -658,7 +773,7 @@ const { add } = useCart();
               </div>
 
               {/* Left text */}
-              <div className="relative z-10 mt-5 w-[58%]">
+              <div className="relative z-20 mt-5 w-[56%]">
                 <motion.h1
                   variants={contentItem}
                   className="text-[clamp(48px,14vw,70px)] font-black uppercase leading-[0.82]"

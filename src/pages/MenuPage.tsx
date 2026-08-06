@@ -5,12 +5,23 @@ import { menuItems, menuCategories, formatPKR, type MenuItem } from '@/data/menu
 import { useTheme } from '@/context/ThemeContext';
 import { useCart } from '@/context/CartContext';
 import { Footer } from '@/components/Footer';
-import { useNavigate } from 'react-router-dom';
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
+import {
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom';
+
 export default function MenuPage() {
   const { activeProduct } = useTheme();
   const { add } = useCart();
   const a = activeProduct;
 const navigate = useNavigate();
+const [searchParams] = useSearchParams();
  const [category, setCategory] = useState('All');
   const [query, setQuery] = useState('');
   const [spiceFilter, setSpiceFilter] = useState<number | null>(null);
@@ -20,7 +31,25 @@ const navigate = useNavigate();
   const [favourites, setFavourites] = useState<number[]>([]);
   const [detail, setDetail] = useState<MenuItem | null>(null);
   const [detailQty, setDetailQty] = useState(1);
+useEffect(() => {
+  const itemId =
+    searchParams.get('item');
 
+  if (!itemId) {
+    return;
+  }
+
+  const selectedItem =
+    menuItems.find(
+      (item) =>
+        String(item.id) === itemId,
+    );
+
+  if (selectedItem) {
+    setDetail(selectedItem);
+    setDetailQty(1);
+  }
+}, [searchParams]);
   const filtered = useMemo(() => {
   const normalizedQuery = query.trim().toLowerCase();
 

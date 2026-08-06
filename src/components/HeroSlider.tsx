@@ -497,13 +497,12 @@ export function HeroSlider() {
           MOBILE APP-STYLE HERO
       =================================================== */}
 
-      <div
-        className="relative z-10 lg:hidden"
-        style={{
-          minHeight: '700svh',
-          paddingTop: 'var(--nav-h-mobile)',
-        }}
-      >
+     <div
+  className="relative z-10 min-h-[100dvh] lg:hidden"
+  style={{
+    paddingTop: 'var(--nav-h-mobile)',
+  }}
+>
         {/* Decorative glow */}
         <motion.div
           className="pointer-events-none absolute right-[-130px] top-16 h-[330px] w-[330px] rounded-full blur-[105px]"

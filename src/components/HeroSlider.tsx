@@ -488,10 +488,12 @@ export function HeroSlider() {
     >
       <div className="grain" />
 
-      <ParticleCanvas
-        product={product}
-        reduced={reducedMotion}
-      />
+     <div className="hidden lg:block">
+  <ParticleCanvas
+    product={product}
+    reduced={reducedMotion}
+  />
+</div>
 
       {/* ===================================================
           MOBILE APP-STYLE HERO

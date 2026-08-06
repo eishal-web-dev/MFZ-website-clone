@@ -4,7 +4,7 @@ import {
   requireAdmin,
   requireAuth,
   type AuthenticatedRequest,
-} from '../middleware/auth';
+} from '../middleware/auth.js';
 
 const adminRouter = Router();
 

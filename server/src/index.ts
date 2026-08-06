@@ -16,48 +16,50 @@ const port = Number(
   process.env.PORT ?? 5000,
 );
 
-const allowedOrigins = [
+const allowedOrigins = new Set([
   'http://localhost:5173',
   'http://localhost:4173',
+  'https://renewed-mindfulness-production-b090.up.railway.app',
   'https://mfz-pk.com',
   'https://www.mfz-pk.com',
+]);
+
+const configuredClientUrl =
   process.env.CLIENT_URL
     ?.trim()
-    .replace(/\/$/, ''),
-].filter(
-  (origin): origin is string =>
-    Boolean(origin),
-);
+    .replace(/\/+$/, '');
+
+if (configuredClientUrl) {
+  allowedOrigins.add(
+    configuredClientUrl,
+  );
+}
 
 const corsOptions: CorsOptions = {
   origin(origin, callback) {
-    // Health checks, Postman and server-to-server
-    // requests may not include an Origin header.
     if (!origin) {
       callback(null, true);
       return;
     }
 
     const cleanOrigin =
-      origin.replace(/\/$/, '');
+      origin
+        .trim()
+        .replace(/\/+$/, '');
 
     if (
-      allowedOrigins.includes(cleanOrigin)
+      allowedOrigins.has(cleanOrigin)
     ) {
       callback(null, true);
       return;
     }
 
     console.error(
-      'Blocked CORS origin:',
+      'CORS rejected origin:',
       cleanOrigin,
     );
 
-    callback(
-      new Error(
-        `Origin ${cleanOrigin} is not allowed by CORS.`,
-      ),
-    );
+    callback(null, false);
   },
 
   methods: [
@@ -72,13 +74,13 @@ const corsOptions: CorsOptions = {
   allowedHeaders: [
     'Content-Type',
     'Authorization',
+    'Accept',
   ],
 
   credentials: true,
   optionsSuccessStatus: 204,
 };
 
-// CORS must be registered before all API routes.
 app.use(cors(corsOptions));
 
 app.use(express.json());

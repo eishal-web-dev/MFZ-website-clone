@@ -93,7 +93,7 @@ function AppRoutes() {
         </Suspense>
       </AnimatePresence>
       <CartDrawer />
-      <MobileBar />
+      
     </>
   );
 }

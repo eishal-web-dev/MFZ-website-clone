@@ -111,11 +111,7 @@ export function HeroSlider() {
     activeProduct,
   } = useTheme();
 
-  const {
-    add,
-    open: openCart,
-    count,
-  } = useCart();
+const { add } = useCart();
 
   const product = activeProduct;
 
@@ -543,35 +539,7 @@ export function HeroSlider() {
               MFZ Corndog
             </div>
 
-            <button
-              type="button"
-              onClick={openCart}
-              className="relative flex h-11 w-11 items-center justify-center rounded-full border"
-              style={{
-                color:
-                  product.textColor,
-                borderColor: `${product.textColor}30`,
-                background:
-                  'rgba(0,0,0,0.22)',
-              }}
-              aria-label="Open cart"
-            >
-              <ShoppingBag size={19} />
-
-              {count > 0 && (
-                <span
-                  className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-black"
-                  style={{
-                    background:
-                      product.accentColor,
-                    color:
-                      product.onAccent,
-                  }}
-                >
-                  {count}
-                </span>
-              )}
-            </button>
+            
           </div>
 
           {/* Hero presentation */}
@@ -998,46 +966,7 @@ export function HeroSlider() {
           </section>
         </div>
 
-        {/* Sticky mobile actions */}
-        <div
-          className="fixed bottom-0 left-0 right-0 z-40 border-t px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl lg:hidden"
-          style={{
-            background:
-              'rgba(8,4,3,0.9)',
-            borderColor: `${product.accentColor}25`,
-          }}
-        >
-          <div className="mx-auto grid max-w-lg grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              className="flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 text-sm font-black uppercase"
-              style={{
-                color:
-                  product.accentColor,
-                borderColor:
-                  product.accentColor,
-              }}
-            >
-              <Plus size={20} />
-              Add to Cart
-            </button>
 
-            <Link
-              to="/checkout"
-              className="flex min-h-14 items-center justify-center gap-2 rounded-2xl text-sm font-black uppercase"
-              style={{
-                background:
-                  product.accentColor,
-                color:
-                  product.onAccent,
-              }}
-            >
-              Order Now
-              <ChevronRight size={19} />
-            </Link>
-          </div>
-        </div>
       </div>
 
       {/* ===================================================

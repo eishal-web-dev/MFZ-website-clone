@@ -26,8 +26,8 @@ import potatoImage from '@/assets/products/potatoeCD.png';
 ========================================================= */
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ??
-  'http://localhost:5000/api';
+  import.meta.env.VITE_API_BASE_URL ||
+  'https://mfz-website-clone-production.up.railway.app/api';
 
 const AUTH_ENDPOINTS = {
   register: `${API_BASE_URL}/auth/register`,
@@ -113,7 +113,7 @@ async function postJson<T>(
     });
   } catch {
     throw new Error(
-      'Cannot connect to the MFZ server. Make sure the backend is running on port 5000.',
+      'Cannot connect to the MFZ server. Please try again shortly.',
     );
   }
 

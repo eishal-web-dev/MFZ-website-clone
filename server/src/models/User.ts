@@ -1,7 +1,12 @@
 import mongoose, {
   Schema,
+  model,
   type InferSchemaType,
 } from 'mongoose';
+
+export type UserRole =
+  | 'customer'
+  | 'admin';
 
 const userSchema = new Schema(
   {
@@ -9,6 +14,7 @@ const userSchema = new Schema(
       type: String,
       required: true,
       trim: true,
+      minlength: 2,
     },
 
     email: {
@@ -22,12 +28,13 @@ const userSchema = new Schema(
 
     phone: {
       type: String,
+      required: true,
       trim: true,
-      default: '',
     },
 
     passwordHash: {
       type: String,
+      required: true,
       select: false,
     },
 
@@ -37,46 +44,21 @@ const userSchema = new Schema(
       default: 'local',
     },
 
-    googleId: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
-
-    avatar: {
-      type: String,
-      default: '',
-    },
-
     isVerified: {
       type: Boolean,
-      default: false,
-    },
-
-    verificationCodeHash: {
-      type: String,
-      select: false,
-    },
-
-    verificationCodeExpiresAt: {
-      type: Date,
-      select: false,
-    },
-
-    resetTokenHash: {
-      type: String,
-      select: false,
-    },
-
-    resetTokenExpiresAt: {
-      type: Date,
-      select: false,
+      default: true,
     },
 
     crunchPoints: {
       type: Number,
       default: 0,
       min: 0,
+    },
+
+    role: {
+      type: String,
+      enum: ['customer', 'admin'],
+      default: 'customer',
     },
   },
   {
@@ -88,5 +70,5 @@ export type UserDocument =
   InferSchemaType<typeof userSchema>;
 
 export const User =
-  mongoose.models.User ??
-  mongoose.model('User', userSchema);
+  mongoose.models.User ||
+  model('User', userSchema);

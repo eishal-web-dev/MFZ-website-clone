@@ -170,39 +170,102 @@ export default function CheckoutPage() {
     );
   }, [form, items, mode, total]);
 
-  const handleSubmit = (
-    event: FormEvent<HTMLFormElement>,
-  ) => {
-    event.preventDefault();
+  const handleSubmit = async (
+  event: FormEvent<HTMLFormElement>,
+) => {
+   event.preventDefault();
 
-    if (items.length === 0) {
-      return;
-    }
+if (items.length === 0) return;
 
-    if (
-      mode === 'delivery' &&
-      !form.address.trim()
-    ) {
-      return;
-    }
+if (
+  mode === 'delivery' &&
+  !form.address.trim()
+) {
+  return;
+}
 
-    if (
-      mode === 'pickup' &&
-      !form.branch
-    ) {
-      return;
-    }
+if (
+  mode === 'pickup' &&
+  !form.branch
+) {
+  return;
+}
 
-    const newOrderNumber = `MFZ-${Date.now()
-      .toString()
-      .slice(-8)}`;
+try {
+  const response = await fetch(
+    'http://localhost:5000/api/orders',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type':
+          'application/json',
+      },
+      body: JSON.stringify({
+        customer: {
+          name: form.name,
+          phone: form.phone,
+          address: form.address,
+        },
 
-    setPlacedOrderNumber(newOrderNumber);
-    setOrderPlaced(true);
+        items: items.map((item) => ({
+          productId: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          filling: item.filling,
+          sauces: item.sauces,
+          extras: item.extras,
+        })),
 
-    clear();
-  };
+        orderType: mode,
 
+        branchName:
+          mode === 'pickup'
+            ? form.branch
+            : '',
+
+        subtotal: total,
+
+        deliveryFee: 0,
+
+        total,
+
+        paymentMethod:
+          payment === 'cod'
+            ? 'cash-on-delivery'
+            : payment,
+
+        customerNotes:
+          form.instructions,
+      }),
+    },
+  );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+        'Unable to place order.',
+    );
+  }
+
+  setPlacedOrderNumber(
+    data.order.orderNumber,
+  );
+
+  setOrderPlaced(true);
+
+  clear();
+} catch (error) {
+  console.error(error);
+
+  alert(
+    'Unable to place order.',
+  );
+}
+};
   return (
     <div
       className="min-h-screen"
@@ -809,7 +872,7 @@ export default function CheckoutPage() {
                 </button>
 
                 <a
-                  href={`https://wa.me/${MFZ_WHATSAPP_NUMBER}?text=${whatsappMessage}`}
+                  href={`mfzContact.whatsapp.url`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="
@@ -1023,4 +1086,5 @@ export default function CheckoutPage() {
       />
     </div>
   );
+
 }

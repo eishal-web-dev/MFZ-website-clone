@@ -12,7 +12,7 @@ import { CartDrawer } from '@/components/CartDrawer';
 import { MobileBar } from '@/components/MobileBar';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-
+import { AdminRoute } from '@/pages/admin/AdminRoute';
 const HomePage = lazy(() => import('@/pages/HomePage'));
 const MenuPage = lazy(() => import('@/pages/MenuPage'));
 const BuildPage = lazy(() => import('@/pages/BuildPage'));
@@ -21,7 +21,15 @@ const AboutPage = lazy(() => import('@/pages/AboutPage'));
 const ContactPage = lazy(() => import('@/pages/ContactPage'));
 const CheckoutPage = lazy(() => import('@/pages/CheckoutPage'));
 import AuthPages from '@/pages/AuthPages';
-
+const AdminDashboardPage = lazy(
+  () =>
+    import(
+      '@/pages/admin/AdminDashboardPage'
+    ),
+);
+const AdminOrdersPage = lazy(
+  () => import('@/pages/admin/AdminOrdersPage'),
+);
 function PageLoader() {
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--mfz-bg)' }}>
@@ -58,6 +66,22 @@ function AppRoutes() {
             <Route path="/reset" element={<AuthPages.ResetPage />} />
             <Route path="/verify" element={<AuthPages.VerifyPage />} />
             <Route path="*" element={<HomePage />} />
+            <Route
+  path="/admin/orders"
+  element={
+    <AdminRoute>
+      <AdminOrdersPage />
+    </AdminRoute>
+  }
+/>
+            <Route
+  path="/admin"
+  element={
+    <AdminRoute>
+      <AdminDashboardPage />
+    </AdminRoute>
+  }
+/>
           </Routes>
         </Suspense>
       </AnimatePresence>

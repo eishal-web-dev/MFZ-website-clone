@@ -15,7 +15,7 @@ import {
   Phone,
   Truck,
 } from 'lucide-react';
-
+import { mfzContact } from "@/data/contact";
 import {
   branches,
   formatPhoneForDisplay,
@@ -416,11 +416,9 @@ export default function LocationsPage() {
                       </span>
                     </div>
 
-                    <a
-                      href={`tel:${branch.phone}`}
-                      onClick={(event) =>
-                        event.stopPropagation()
-                      }
+                   <a
+  href={`tel:${branch.phone.replace(/[^0-9]/g, "")}`}
+  onClick={(event) => event.stopPropagation()}
                       className="
                         flex
                         items-center
@@ -475,7 +473,7 @@ export default function LocationsPage() {
                         }}
                       />
 
-                      WhatsApp: +92 305 1880355
+                     WhatsApp: {mfzContact.whatsapp.number}
                     </a>
                   </div>
 
@@ -512,7 +510,7 @@ export default function LocationsPage() {
                     </a>
 
                     <a
-                      href={`tel:${branch.phone}`}
+                      href={`tel:${branch.phone.replace(/[^0-9]/g, "")}`}
                       onClick={(event) =>
                         event.stopPropagation()
                       }

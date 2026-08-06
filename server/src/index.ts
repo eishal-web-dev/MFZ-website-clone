@@ -2,16 +2,16 @@ import 'dotenv/config';
 
 import express from 'express';
 import cors from 'cors';
-
+import adminRouter from './routes/admin';
 import { connectDatabase } from './config/db.js';
 import { authRouter } from './routes/authRoutes.js';
-
+import orderRoutes from './routes/orders.js';
 const app = express();
 
 const port = Number(
   process.env.PORT ?? 5000,
 );
-
+app.use('/api/admin', adminRouter);
 app.use(
   cors({
     origin:
@@ -31,7 +31,7 @@ app.get('/api/health', (_request, response) => {
 });
 
 app.use('/api/auth', authRouter);
-
+app.use('/api/orders', orderRoutes);
 app.use((_request, response) => {
   response.status(404).json({
     message: 'Route not found.',

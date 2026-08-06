@@ -10,7 +10,7 @@ const footerLinks = [
   { label: 'About', path: '/about' },
   { label: 'Contact', path: '/contact' },
 ];
-
+import { mfzContact } from "@/data/contact";
 export function Footer() {
   const { activeProduct } = useTheme();
   const a = activeProduct;
@@ -115,7 +115,17 @@ export function Footer() {
                   mfz.delivery
                 </a>
               </li>
-              <li>WhatsApp ordering available</li>
+              <li>
+  <a
+    href={mfzContact.whatsapp.url}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="transition-opacity hover:opacity-100"
+    style={{ opacity: 0.8 }}
+  >
+    WhatsApp: {mfzContact.whatsapp.number}
+  </a>
+</li>
             </ul>
           </div>
         </div>

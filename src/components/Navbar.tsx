@@ -14,6 +14,7 @@ import {
 } from 'framer-motion';
 import {
   ArrowRight,
+  LayoutDashboard,
   LogOut,
   Menu,
   Search,
@@ -36,8 +37,8 @@ interface StoredUser {
   email: string;
   phone?: string;
   crunchPoints?: number;
+  role?: 'customer' | 'admin';
 }
-
 /* =========================================================
    NAVIGATION LINKS
 ========================================================= */
@@ -351,7 +352,10 @@ export function Navbar() {
   const userInitial =
     user?.name?.trim().charAt(0).toUpperCase() ||
     'U';
-
+  const isAdmin =
+  user?.role === 'admin' &&
+  user.email.trim().toLowerCase() ===
+    'admin@gmail.com';
   return (
     <>
       {/* ===================================================
@@ -439,18 +443,20 @@ export function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop navigation */}
-          <div
-            className="
-              absolute
-              left-1/2
-              hidden
-              -translate-x-1/2
-              items-center
-              gap-7
-              lg:flex
-            "
-          >
+         <div
+  className="
+    absolute
+    left-1/2
+    hidden
+    -translate-x-1/2
+    items-center
+    gap-7
+    lg:flex
+  "
+  style={{
+    marginLeft: '-50px',
+  }}
+>
             {navLinks.map((link) => {
               const isActive =
                 location.pathname ===
@@ -780,7 +786,36 @@ export function Navbar() {
                 </Link>
               )}
             </div>
-
+              {/* Admin portal */}
+{isAdmin && (
+  <Link
+    to="/admin"
+    className="
+      hidden
+      items-center
+      gap-2
+      rounded-full
+      border
+      px-4
+      py-2.5
+      text-sm
+      font-black
+      uppercase
+      tracking-wide
+      transition-all
+      hover:scale-[1.03]
+      xl:flex
+    "
+    style={{
+      background: `${active.accentColor}18`,
+      borderColor: `${active.accentColor}66`,
+      color: active.accentColor,
+    }}
+  >
+    <LayoutDashboard size={17} />
+   
+  </Link>
+)}
             {/* Order button */}
             <Link
               to="/menu"
@@ -1405,7 +1440,33 @@ export function Navbar() {
                       {user.email}
                     </p>
                   </div>
-
+                      {isAdmin && (
+  <Link
+    to="/admin"
+    onClick={() => setAccountOpen(false)}
+    className="
+      mt-2
+      flex
+      w-full
+      items-center
+      gap-3
+      rounded-xl
+      px-4
+      py-3
+      text-left
+      text-sm
+      font-black
+      transition-colors
+      hover:bg-white/5
+    "
+    style={{
+      color: active.accentColor,
+    }}
+  >
+    <LayoutDashboard size={17} />
+    Admin Dashboard
+  </Link>
+)}
                   <button
                     type="button"
                     onClick={
@@ -1523,7 +1584,42 @@ export function Navbar() {
                   </motion.div>
                 ),
               )}
-
+              {/* Mobile admin portal */}
+{isAdmin && (
+  <motion.div
+    initial={{
+      opacity: 0,
+      y: 40,
+    }}
+    animate={{
+      opacity: 1,
+      y: 0,
+    }}
+    transition={{
+      delay: navLinks.length * 0.06,
+    }}
+  >
+    <Link
+      to="/admin"
+      className="
+        flex
+        items-center
+        gap-3
+        text-4xl
+        font-black
+        uppercase
+        tracking-tight
+      "
+      style={{
+        color: active.accentColor,
+        fontFamily: 'Anton, sans-serif',
+      }}
+    >
+      <LayoutDashboard size={29} />
+      Admin
+    </Link>
+  </motion.div>
+)}
               {/* Mobile order button */}
               <motion.div
                 initial={{

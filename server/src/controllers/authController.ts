@@ -7,6 +7,8 @@ import jwt from 'jsonwebtoken';
 
 import { User } from '../models/User.js';
 
+type UserRole = 'customer' | 'admin';
+
 interface RegisterBody {
   name?: string;
   email?: string;
@@ -18,6 +20,21 @@ interface LoginBody {
   email?: string;
   password?: string;
 }
+
+interface PublicUserSource {
+  _id: unknown;
+  name: string;
+  email: string;
+  phone?: string;
+  provider?: string;
+  isVerified?: boolean;
+  crunchPoints?: number;
+  role?: UserRole;
+}
+
+/* =========================================================
+   CREATE JWT
+========================================================= */
 
 function createToken(
   userId: string,
@@ -31,26 +48,28 @@ function createToken(
     );
   }
 
+  const expiresIn =
+    process.env.JWT_EXPIRES_IN || '7d';
+
   return jwt.sign(
     {
       sub: userId,
     },
     jwtSecret,
     {
-      expiresIn: '7d',
+      expiresIn:
+        expiresIn as jwt.SignOptions['expiresIn'],
     },
   );
 }
 
-function toPublicUser(user: {
-  _id: unknown;
-  name: string;
-  email: string;
-  phone?: string;
-  provider?: string;
-  isVerified?: boolean;
-  crunchPoints?: number;
-}) {
+/* =========================================================
+   SAFE USER RESPONSE
+========================================================= */
+
+function toPublicUser(
+  user: PublicUserSource,
+) {
   return {
     id: String(user._id),
     name: user.name,
@@ -61,8 +80,14 @@ function toPublicUser(user: {
       user.isVerified ?? true,
     crunchPoints:
       user.crunchPoints ?? 0,
+    role:
+      user.role ?? 'customer',
   };
 }
+
+/* =========================================================
+   REGISTER
+========================================================= */
 
 export async function register(
   request: Request<
@@ -80,10 +105,14 @@ export async function register(
       password,
     } = request.body;
 
-    const cleanName = name?.trim();
+    const cleanName =
+      name?.trim();
+
     const cleanEmail =
       email?.trim().toLowerCase();
-    const cleanPhone = phone?.trim();
+
+    const cleanPhone =
+      phone?.trim();
 
     if (
       !cleanName ||
@@ -92,37 +121,49 @@ export async function register(
       !password
     ) {
       response.status(400).json({
+        success: false,
         message:
           'Name, email, phone and password are required.',
       });
+
       return;
     }
 
     if (cleanName.length < 2) {
       response.status(400).json({
+        success: false,
         message:
           'Please enter a valid name.',
       });
+
       return;
     }
 
-    if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+    const validEmail =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
         cleanEmail,
-      )
-    ) {
+      );
+
+    if (!validEmail) {
       response.status(400).json({
+        success: false,
         message:
           'Please enter a valid email address.',
       });
+
       return;
     }
 
-    if (password.length < 8) {
+    const cleanPassword =
+      password.trim();
+
+    if (cleanPassword.length < 8) {
       response.status(400).json({
+        success: false,
         message:
           'Password must contain at least 8 characters.',
       });
+
       return;
     }
 
@@ -133,15 +174,26 @@ export async function register(
 
     if (existingUser) {
       response.status(409).json({
+        success: false,
         message:
           'An account already exists with this email.',
       });
+
       return;
     }
 
     const passwordHash =
-      await bcrypt.hash(password, 12);
+      await bcrypt.hash(
+        cleanPassword,
+        12,
+      );
 
+    /*
+     * Security:
+     * Public registration always creates a customer.
+     * Promote the official admin account manually
+     * in MongoDB Atlas.
+     */
     const user = await User.create({
       name: cleanName,
       email: cleanEmail,
@@ -150,6 +202,7 @@ export async function register(
       provider: 'local',
       isVerified: true,
       crunchPoints: 0,
+      role: 'customer',
     });
 
     const token = createToken(
@@ -157,6 +210,7 @@ export async function register(
     );
 
     response.status(201).json({
+      success: true,
       message:
         'Account created successfully.',
       token,
@@ -169,11 +223,16 @@ export async function register(
     );
 
     response.status(500).json({
+      success: false,
       message:
         'Unable to create account. Please try again.',
     });
   }
 }
+
+/* =========================================================
+   LOGIN
+========================================================= */
 
 export async function login(
   request: Request<
@@ -184,29 +243,39 @@ export async function login(
   response: Response,
 ): Promise<void> {
   try {
-    const { email, password } =
-      request.body;
+    const {
+      email,
+      password,
+    } = request.body;
 
     const cleanEmail =
       email?.trim().toLowerCase();
 
     if (!cleanEmail || !password) {
       response.status(400).json({
+        success: false,
         message:
           'Email and password are required.',
       });
+
       return;
     }
 
-    const user = await User.findOne({
-      email: cleanEmail,
-    }).select('+passwordHash');
+    const user =
+      await User.findOne({
+        email: cleanEmail,
+      }).select('+passwordHash');
 
-    if (!user || !user.passwordHash) {
+    if (
+      !user ||
+      !user.passwordHash
+    ) {
       response.status(401).json({
+        success: false,
         message:
           'Incorrect email or password.',
       });
+
       return;
     }
 
@@ -218,9 +287,11 @@ export async function login(
 
     if (!passwordMatches) {
       response.status(401).json({
+        success: false,
         message:
           'Incorrect email or password.',
       });
+
       return;
     }
 
@@ -229,6 +300,7 @@ export async function login(
     );
 
     response.status(200).json({
+      success: true,
       message:
         'Signed in successfully.',
       token,
@@ -241,6 +313,7 @@ export async function login(
     );
 
     response.status(500).json({
+      success: false,
       message:
         'Unable to sign in. Please try again.',
     });

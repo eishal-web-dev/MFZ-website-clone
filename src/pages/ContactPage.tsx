@@ -532,8 +532,8 @@ export default function ContactPage() {
                   />
                 }
                 title="Head Office"
-                value="091-5815133"
-                href="tel:0915815133"
+                value="+ 091 5815133"
+                href="tel:+ 091 5815133"
                 accentColor={active.accentColor}
                 textColor={active.textColor}
               />

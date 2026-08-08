@@ -12,7 +12,9 @@ import { Navbar } from '@/components/Navbar';
 import { CartDrawer } from '@/components/CartDrawer';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { DeliveryLocationModal } from '@/components/DeliveryLocationModal';
+import { DeliveryLocationModalV2 } from '@/components/DeliveryLocationModalV2';
+import { AutoLocationResolver } from '@/components/AutoLocationResolver';
+import { InstallAppPrompt } from '@/components/InstallAppPrompt';
 import { LocationBadge } from '@/components/LocationBadge';
 import { AdminRoute } from '@/pages/admin/AdminRoute';
 
@@ -131,7 +133,16 @@ export default function App() {
             </AnimatePresence>
 
             <AppRoutes />
-            <DeliveryLocationModal enabled={!loading} />
+
+            {/* After the loader, the browser's native geolocation permission
+                appears first. If the user blocks it or GPS is unavailable,
+                AutoLocationResolver opens the themed manual 3-step picker. */}
+            <AutoLocationResolver enabled={!loading} />
+            <DeliveryLocationModalV2 enabled={!loading} />
+
+            {/* Delayed install CTA. Chromium gets the real native PWA install
+                dialog; iOS receives Add-to-Home-Screen instructions. */}
+            <InstallAppPrompt />
           </CartProvider>
         </LocationProvider>
       </ThemeProvider>

@@ -11,6 +11,7 @@ export default defineConfig({
       injectRegister: 'auto',
       includeAssets: ['mfz-icon.svg'],
       manifest: {
+        id: '/',
         name: 'MFZ Corn Dog',
         short_name: 'MFZ',
         description: 'Order MFZ favourites with your saved delivery location.',
@@ -23,15 +24,15 @@ export default defineConfig({
         icons: [
           {
             src: '/mfz-icon.svg',
-            sizes: 'any',
+            sizes: '192x192',
             type: 'image/svg+xml',
             purpose: 'any',
           },
           {
             src: '/mfz-icon.svg',
-            sizes: 'any',
+            sizes: '512x512',
             type: 'image/svg+xml',
-            purpose: 'maskable',
+            purpose: 'any maskable',
           },
         ],
       },

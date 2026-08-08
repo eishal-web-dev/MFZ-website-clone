@@ -10,6 +10,13 @@ export interface Branch {
   mapQuery: string;
   mapX: number;
   mapY: number;
+  latitude: number;
+  longitude: number;
+}
+
+export interface BranchDistance {
+  branch: Branch;
+  distanceKm: number;
 }
 
 export const branches: Branch[] = [
@@ -25,6 +32,9 @@ export const branches: Branch[] = [
     mapQuery: 'MFZ Corn Dog HBK Branch Peshawar',
     mapX: 68,
     mapY: 58,
+    // HBK Arena / Main Ring Road area.
+    latitude: 33.97419,
+    longitude: 71.4736,
   },
   {
     id: 2,
@@ -38,12 +48,15 @@ export const branches: Branch[] = [
     mapQuery: 'MFZ Corn Dog University Town Peshawar',
     mapX: 45,
     mapY: 42,
+    // University Town / University Road service area.
+    latitude: 33.9957,
+    longitude: 71.505,
   },
   {
     id: 3,
     name: 'MFZ Gulbahar Branch',
     area: 'Gulbahar No. 1, Peshawar',
-    address: 'Near Shell Pump, Gulbahar No. 1, Peshawar',
+    address: 'Near Salman Bakers, Gulbahar No. 1, Peshawar',
     hours: 'Contact branch to confirm current opening hours',
     phone: '+091 3026266',
     whatsapp: '+92 305 1880355',
@@ -51,6 +64,9 @@ export const branches: Branch[] = [
     mapQuery: 'MFZ Corn Dog Gulbahar Branch Peshawar',
     mapX: 31,
     mapY: 34,
+    // Gulbahar No. 1 / Salman Bakers area.
+    latitude: 34.012,
+    longitude: 71.593,
   },
   {
     id: 4,
@@ -64,6 +80,8 @@ export const branches: Branch[] = [
     mapQuery: 'MFZ Head Office Peshawar',
     mapX: 53,
     mapY: 50,
+    latitude: 34.0151,
+    longitude: 71.5249,
   },
 ];
 
@@ -71,6 +89,50 @@ export const getBranchById = (
   id: number,
 ): Branch | undefined =>
   branches.find((branch) => branch.id === id);
+
+const toRadians = (value: number) => (value * Math.PI) / 180;
+
+export const distanceBetweenKm = (
+  latitudeA: number,
+  longitudeA: number,
+  latitudeB: number,
+  longitudeB: number,
+) => {
+  const earthRadiusKm = 6371;
+  const dLat = toRadians(latitudeB - latitudeA);
+  const dLng = toRadians(longitudeB - longitudeA);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(latitudeA)) *
+      Math.cos(toRadians(latitudeB)) *
+      Math.sin(dLng / 2) ** 2;
+
+  return 2 * earthRadiusKm * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+export const findNearestDeliveryBranch = (
+  latitude: number,
+  longitude: number,
+): BranchDistance | null => {
+  const deliveryBranches = branches.filter((branch) => branch.delivery);
+  if (!deliveryBranches.length) return null;
+
+  return deliveryBranches.reduce<BranchDistance | null>((nearest, branch) => {
+    const distanceKm = distanceBetweenKm(
+      latitude,
+      longitude,
+      branch.latitude,
+      branch.longitude,
+    );
+
+    if (!nearest || distanceKm < nearest.distanceKm) {
+      return { branch, distanceKm };
+    }
+
+    return nearest;
+  }, null);
+};
 
 export const formatPhoneForDisplay = (
   phone: string,

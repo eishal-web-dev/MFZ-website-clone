@@ -14,8 +14,11 @@ import {
 
 const STORAGE_KEY = 'mfz-delivery-location';
 
+export type LocationSource = 'manual' | 'gps';
+
 export interface MFZDeliveryLocation {
   city: 'Peshawar';
+  source: LocationSource;
   areaId: string;
   areaName: string;
   zone: string;
@@ -24,6 +27,11 @@ export interface MFZDeliveryLocation {
   deliveryNotes: string;
   branchId: number;
   branchName: string;
+  latitude?: number;
+  longitude?: number;
+  accuracyMeters?: number;
+  mapsUrl?: string;
+  distanceToBranchKm?: number;
   savedAt: number;
 }
 
@@ -34,6 +42,14 @@ interface SaveLocationInput {
   deliveryNotes?: string;
 }
 
+interface SaveGPSLocationInput {
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number;
+  branch: Branch;
+  distanceToBranchKm: number;
+}
+
 interface LocationContextValue {
   deliveryLocation: MFZDeliveryLocation | null;
   selectedBranch: Branch | null;
@@ -42,6 +58,7 @@ interface LocationContextValue {
   openSelector: () => void;
   closeSelector: () => void;
   saveLocation: (input: SaveLocationInput) => void;
+  saveGPSLocation: (input: SaveGPSLocationInput) => void;
   clearLocation: () => void;
   formattedAddress: string;
 }
@@ -59,14 +76,16 @@ const readStoredLocation = (): MFZDeliveryLocation | null => {
 
     if (
       parsed.city !== 'Peshawar' ||
-      !parsed.areaId ||
       !parsed.branchId ||
       !parsed.addressLine
     ) {
       return null;
     }
 
-    return parsed;
+    return {
+      ...parsed,
+      source: parsed.source ?? 'manual',
+    };
   } catch {
     return null;
   }
@@ -76,9 +95,10 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const [deliveryLocation, setDeliveryLocation] =
     useState<MFZDeliveryLocation | null>(() => readStoredLocation());
 
-  const [selectorOpen, setSelectorOpen] = useState(
-    () => readStoredLocation() === null,
-  );
+  // The manual picker no longer opens immediately. The app first tries the
+  // browser's native geolocation permission flow. If that fails/gets denied,
+  // AutoLocationResolver opens this selector as the fallback.
+  const [selectorOpen, setSelectorOpen] = useState(false);
 
   const selectedBranch = useMemo(() => {
     if (!deliveryLocation) return null;
@@ -90,6 +110,18 @@ export function LocationProvider({ children }: { children: ReactNode }) {
 
   const formattedAddress = useMemo(() => {
     if (!deliveryLocation) return '';
+
+    if (deliveryLocation.source === 'gps' && deliveryLocation.mapsUrl) {
+      return [
+        'Live GPS delivery pin',
+        deliveryLocation.mapsUrl,
+        deliveryLocation.accuracyMeters
+          ? `GPS accuracy ±${Math.round(deliveryLocation.accuracyMeters)}m`
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' · ');
+    }
 
     return [
       deliveryLocation.addressLine,
@@ -103,6 +135,15 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       .join(', ');
   }, [deliveryLocation]);
 
+  const persist = (nextLocation: MFZDeliveryLocation) => {
+    setDeliveryLocation(nextLocation);
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextLocation));
+    setSelectorOpen(false);
+    window.dispatchEvent(
+      new CustomEvent('mfz-location-changed', { detail: nextLocation }),
+    );
+  };
+
   const saveLocation = ({
     area,
     addressLine,
@@ -112,8 +153,9 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     const branch = branches.find((item) => item.id === area.branchId);
     if (!branch) return;
 
-    const nextLocation: MFZDeliveryLocation = {
+    persist({
       city: 'Peshawar',
+      source: 'manual',
       areaId: area.id,
       areaName: area.name,
       zone: area.zone,
@@ -123,20 +165,42 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       branchId: branch.id,
       branchName: branch.name,
       savedAt: Date.now(),
-    };
+    });
+  };
 
-    setDeliveryLocation(nextLocation);
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextLocation));
-    setSelectorOpen(false);
-    window.dispatchEvent(
-      new CustomEvent('mfz-location-changed', { detail: nextLocation }),
-    );
+  const saveGPSLocation = ({
+    latitude,
+    longitude,
+    accuracyMeters,
+    branch,
+    distanceToBranchKm,
+  }: SaveGPSLocationInput) => {
+    const mapsUrl = `https://www.google.com/maps?q=${latitude.toFixed(6)},${longitude.toFixed(6)}`;
+
+    persist({
+      city: 'Peshawar',
+      source: 'gps',
+      areaId: 'live-gps',
+      areaName: 'Live Location',
+      zone: 'GPS detected',
+      addressLine: mapsUrl,
+      landmark: '',
+      deliveryNotes: '',
+      branchId: branch.id,
+      branchName: branch.name,
+      latitude,
+      longitude,
+      accuracyMeters,
+      mapsUrl,
+      distanceToBranchKm,
+      savedAt: Date.now(),
+    });
   };
 
   const clearLocation = () => {
     setDeliveryLocation(null);
     window.localStorage.removeItem(STORAGE_KEY);
-    setSelectorOpen(true);
+    setSelectorOpen(false);
   };
 
   const value: LocationContextValue = {
@@ -149,6 +213,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       if (deliveryLocation) setSelectorOpen(false);
     },
     saveLocation,
+    saveGPSLocation,
     clearLocation,
     formattedAddress,
   };
@@ -178,5 +243,6 @@ export function getStoredMFZLocation() {
 
 export function getStoredMFZArea() {
   const stored = readStoredLocation();
-  return stored ? getDeliveryAreaById(stored.areaId) ?? null : null;
+  if (!stored || stored.source === 'gps') return null;
+  return getDeliveryAreaById(stored.areaId) ?? null;
 }

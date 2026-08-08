@@ -10,6 +10,10 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       includeAssets: ['mfz-icon.svg'],
+      devOptions: {
+        enabled: true,
+        type: 'module',
+      },
       manifest: {
         id: '/',
         name: 'MFZ Corn Dog',

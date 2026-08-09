@@ -787,20 +787,19 @@ export function Navbar() {
 {isAdmin && (
   <Link
     to="/admin"
+    aria-label="Open admin panel"
+    title="Admin panel"
     className="
       hidden
+      h-11
+      w-11
+      shrink-0
       items-center
-      gap-2
+      justify-center
       rounded-full
       border
-      px-4
-      py-2.5
-      text-sm
-      font-black
-      uppercase
-      tracking-wide
       transition-all
-      hover:scale-[1.03]
+      hover:scale-105
       xl:flex
     "
     style={{
@@ -809,8 +808,7 @@ export function Navbar() {
       color: active.accentColor,
     }}
   >
-    <LayoutDashboard size={17} />
-   
+    <LayoutDashboard size={18} />
   </Link>
 )}
             {/* Order button */}

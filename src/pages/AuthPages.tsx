@@ -27,7 +27,7 @@ import potatoImage from '@/assets/products/potatoeCD.png';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  'https://mfz-website-clone-production.up.railway.app/api';
+  'https://mfz-website-backend-production.up.railway.app/api';
 
 const AUTH_ENDPOINTS = {
   register: `${API_BASE_URL}/auth/register`,

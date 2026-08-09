@@ -11,8 +11,7 @@ export default defineConfig({
       injectRegister: 'auto',
       includeAssets: ['mfz-icon.svg'],
       devOptions: {
-        enabled: true,
-        type: 'module',
+        enabled: false,
       },
       manifest: {
         id: '/',
@@ -42,6 +41,8 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         navigateFallback: '/index.html',
       },
     }),

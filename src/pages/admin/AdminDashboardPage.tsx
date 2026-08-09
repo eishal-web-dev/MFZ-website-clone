@@ -18,6 +18,7 @@ import {
   LayoutDashboard,
   Menu,
   PackageCheck,
+  PackagePlus,
   RefreshCw,
   ShoppingBag,
   TrendingUp,
@@ -1266,6 +1267,24 @@ export default function AdminDashboardPage() {
                   size={18}
                 />
                 Dashboard
+              </Link>
+
+              <Link
+                to="/admin/products"
+                onClick={() =>
+                  setAdminMenuOpen(false)
+                }
+                className="flex w-full items-center gap-3 rounded-2xl border px-5 py-4 text-sm font-black uppercase transition-transform hover:translate-x-1"
+                style={{
+                  background:
+                    'rgba(255,255,255,0.05)',
+                  borderColor: `${active.textColor}18`,
+                  color:
+                    active.textColor,
+                }}
+              >
+                <PackagePlus size={18} />
+                Add Product
               </Link>
 
               <Link

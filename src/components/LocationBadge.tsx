@@ -71,10 +71,11 @@ export function LocationBadge() {
     <button
       type="button"
       onClick={handleClick}
-      className="group fixed left-3 z-[85] flex h-12 max-w-[calc(100vw-24px)] items-center overflow-hidden rounded-2xl border text-left shadow-2xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 sm:left-5"
+      className="group fixed left-3 z-[85] flex max-w-[calc(100vw-24px)] items-center overflow-hidden rounded-3xl border text-left shadow-2xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 sm:left-5"
       style={{
         top: 'calc(var(--nav-h) + 10px)',
         width: expanded ? 'min(408px, calc(100vw - 24px))' : '48px',
+        height: expanded ? '108px' : '48px',
         background: active.bgColor + 'E8',
         borderColor: active.accentColor + '42',
         color: active.textColor,
@@ -84,7 +85,7 @@ export function LocationBadge() {
       aria-expanded={expanded}
     >
       <span
-        className="ml-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+        className="ml-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-300 group-hover:ml-6 group-hover:h-14 group-hover:w-14 group-hover:rounded-2xl"
         style={{
           background: active.accentColor,
           color: active.onAccent,
@@ -110,6 +111,7 @@ export function LocationBadge() {
         @media (hover: hover) and (pointer: fine) {
           .group:hover {
             width: min(408px, calc(100vw - 24px)) !important;
+            height: 108px !important;
           }
         }
       `}</style>

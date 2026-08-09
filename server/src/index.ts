@@ -10,6 +10,7 @@ import { connectDatabase } from './config/db.js';
 import adminRouter from './routes/admin.js';
 import { authRouter } from './routes/authRoutes.js';
 import orderRoutes from './routes/orders.js';
+import productRoutes from './routes/products.js';
 
 const app = express();
 
@@ -135,6 +136,7 @@ app.use('/api', (request, response, next) => {
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/orders', orderRoutes);
+app.use('/api/products', productRoutes);
 
 if (process.env.NODE_ENV === 'production') {
   const frontendDist = path.resolve(process.cwd(), 'dist');

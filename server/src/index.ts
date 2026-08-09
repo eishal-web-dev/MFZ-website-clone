@@ -5,6 +5,7 @@ import express from 'express';
 import cors, {
   type CorsOptions,
 } from 'cors';
+import mongoose from 'mongoose';
 
 import { connectDatabase } from './config/db.js';
 import adminRouter from './routes/admin.js';
@@ -16,8 +17,6 @@ const app = express();
 const port = Number(
   process.env.PORT ?? 5000,
 );
-
-let databaseReady = false;
 
 const allowedOrigins = new Set([
   'http://localhost:5173',
@@ -43,9 +42,11 @@ function isAllowedOrigin(origin: string): boolean {
     return true;
   }
 
-  // Railway preview/production domains can change when a service is recreated.
-  // Allow HTTPS origins on Railway while still rejecting arbitrary websites.
   return /^https:\/\/[a-z0-9-]+\.up\.railway\.app$/i.test(origin);
+}
+
+function isDatabaseReady(): boolean {
+  return mongoose.connection.readyState === 1;
 }
 
 const corsOptions: CorsOptions = {
@@ -101,32 +102,38 @@ app.use(
 );
 
 const healthPayload = () => ({
-  success: true,
-  message: 'MFZ API is running.',
-  database: databaseReady ? 'connected' : 'connecting',
+  success: isDatabaseReady(),
+  message: isDatabaseReady()
+    ? 'MFZ API is running.'
+    : 'MFZ API is waiting for MongoDB.',
+  database: isDatabaseReady()
+    ? 'connected'
+    : 'disconnected',
 });
 
 app.get('/health', (_request, response) => {
-  response.status(200).json(healthPayload());
+  response
+    .status(isDatabaseReady() ? 200 : 503)
+    .json(healthPayload());
 });
 
 app.get('/api/health', (_request, response) => {
-  response.status(200).json(healthPayload());
+  response
+    .status(isDatabaseReady() ? 200 : 503)
+    .json(healthPayload());
 });
 
-// Return a clear API error instead of making mobile users wait for a
-// MongoDB buffering timeout when the database is unavailable.
 app.use('/api', (request, response, next) => {
   if (request.path === '/health') {
     next();
     return;
   }
 
-  if (!databaseReady) {
+  if (!isDatabaseReady()) {
     response.status(503).json({
       success: false,
       message:
-        'MFZ account service is starting. Please try again in a few seconds.',
+        'MFZ account service is reconnecting. Please try again in a moment.',
     });
     return;
   }
@@ -138,9 +145,6 @@ app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/orders', orderRoutes);
 
-// In production Railway runs this Express process for BOTH the API and the
-// React application. That keeps auth same-origin on mobile and avoids CORS
-// and stale cross-service URLs.
 if (process.env.NODE_ENV === 'production') {
   const frontendDist = path.resolve(process.cwd(), 'dist');
 
@@ -185,18 +189,30 @@ function startHttpServer(): void {
   );
 }
 
-async function connectMongo(): Promise<void> {
+async function startApplication(): Promise<void> {
   try {
+    // Do not expose the Railway service until MongoDB is actually ready.
+    // Railway's /api/health check will now only pass after this connection
+    // succeeds, preventing mobile users from reaching auth during startup.
     await connectDatabase();
-    databaseReady = true;
+
+    mongoose.connection.on('disconnected', () => {
+      console.error('MongoDB disconnected. API requests will temporarily return 503.');
+    });
+
+    mongoose.connection.on('reconnected', () => {
+      console.log('MongoDB reconnected successfully.');
+    });
+
+    startHttpServer();
   } catch (error) {
-    databaseReady = false;
     console.error(
-      'MongoDB connection failed. Website will stay online, but account/order APIs are unavailable until MongoDB is configured:',
+      'MFZ startup failed because MongoDB could not connect:',
       error,
     );
+
+    process.exit(1);
   }
 }
 
-startHttpServer();
-void connectMongo();
+void startApplication();

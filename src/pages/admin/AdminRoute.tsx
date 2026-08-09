@@ -15,8 +15,6 @@ interface AdminRouteProps {
   children: ReactNode;
 }
 
-const ADMIN_EMAIL = 'admin@gmail.com';
-
 export function AdminRoute({
   children,
 }: AdminRouteProps) {
@@ -50,10 +48,7 @@ export function AdminRoute({
     ) as StoredUser;
 
     const isAdmin =
-      user.role === 'admin' &&
-      user.email
-        .trim()
-        .toLowerCase() === ADMIN_EMAIL;
+      user.role === 'admin';
 
     if (!isAdmin) {
       return (

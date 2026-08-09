@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react';
-import { ArrowLeft, CheckCircle2, Loader2, PackagePlus } from 'lucide-react';
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { ArrowLeft, CheckCircle2, ImagePlus, Loader2, PackagePlus, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { useTheme } from '@/context/ThemeContext';
@@ -14,8 +14,47 @@ const categories = menuCategories.filter(
     category !== 'All' && category !== 'Popular',
 );
 
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MAX_IMAGE_EDGE = 1200;
+
+function compressProductImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onerror = () => reject(new Error('Unable to read that image.'));
+    reader.onload = () => {
+      const image = new Image();
+
+      image.onerror = () => reject(new Error('Please choose a valid image file.'));
+      image.onload = () => {
+        const scale = Math.min(
+          1,
+          MAX_IMAGE_EDGE / Math.max(image.width, image.height),
+        );
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+
+        const context = canvas.getContext('2d');
+        if (!context) {
+          reject(new Error('Unable to prepare that image.'));
+          return;
+        }
+
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+
+      image.src = String(reader.result);
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function AdminProductsPage() {
   const { activeProduct: active } = useTheme();
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     name: '',
     category: categories[0],
@@ -30,6 +69,48 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [success, setSuccess] = useState(false);
+
+  const [imageName, setImageName] = useState('');
+
+  async function selectImage(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    setMessage('');
+    setSuccess(false);
+
+    if (!file.type.startsWith('image/')) {
+      setMessage('Please select an image from your device.');
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      setMessage('Image must be smaller than 8 MB.');
+      event.target.value = '';
+      return;
+    }
+
+    try {
+      const image = await compressProductImage(file);
+      update('image', image);
+      setImageName(file.name);
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'Unable to prepare that image.',
+      );
+      event.target.value = '';
+    }
+  }
+
+  function removeImage() {
+    update('image', '');
+    setImageName('');
+    if (imageInputRef.current) imageInputRef.current.value = '';
+  }
 
   const update = (name: string, value: string | boolean) =>
     setForm((current) => ({ ...current, [name]: value }));
@@ -59,6 +140,8 @@ export default function AdminProductsPage() {
 
       setSuccess(true);
       setMessage('Product added. It is now available on the customer menu.');
+      setImageName('');
+      if (imageInputRef.current) imageInputRef.current.value = '';
       setForm((current) => ({
         ...current,
         name: '',
@@ -127,10 +210,64 @@ export default function AdminProductsPage() {
             <textarea required rows={4} value={form.description} onChange={(e) => update('description', e.target.value)} className={`${inputClass} mt-2 resize-none`} style={{ background: 'rgba(255,255,255,0.07)', borderColor: `${active.accentColor}35`, color: active.textColor }} />
           </label>
 
-          <label className="text-sm font-bold md:col-span-2" style={{ color: active.textColor }}>
-            Product image URL
-            <input type="url" value={form.image} onChange={(e) => update('image', e.target.value)} placeholder="https://..." className={`${inputClass} mt-2`} style={{ background: 'rgba(255,255,255,0.07)', borderColor: `${active.accentColor}35`, color: active.textColor }} />
-          </label>
+          <div className="md:col-span-2">
+            <p className="text-sm font-bold" style={{ color: active.textColor }}>
+              Product image
+            </p>
+
+            {form.image ? (
+              <div
+                className="relative mt-2 overflow-hidden rounded-2xl border p-3"
+                style={{
+                  background: 'rgba(255,255,255,0.07)',
+                  borderColor: `${active.accentColor}35`,
+                }}
+              >
+                <img
+                  src={form.image}
+                  alt="Product preview"
+                  className="mx-auto h-56 w-full rounded-xl object-contain"
+                />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full"
+                  style={{ background: 'rgba(0,0,0,0.75)', color: '#ffffff' }}
+                  aria-label="Remove selected image"
+                >
+                  <X size={18} />
+                </button>
+                <p
+                  className="mt-2 truncate text-center text-xs"
+                  style={{ color: active.textColor, opacity: 0.65 }}
+                >
+                  {imageName}
+                </p>
+              </div>
+            ) : (
+              <label
+                className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed px-5 py-10 text-center transition-colors hover:bg-white/5"
+                style={{
+                  borderColor: `${active.accentColor}66`,
+                  color: active.textColor,
+                }}
+              >
+                <ImagePlus size={32} style={{ color: active.accentColor }} />
+                <span className="mt-3 font-black">Upload image from device</span>
+                <span className="mt-1 text-xs opacity-55">
+                  JPG, PNG or WEBP — maximum 8 MB
+                </span>
+                <input
+                  ref={imageInputRef}
+                  required
+                  type="file"
+                  accept="image/*"
+                  onChange={selectImage}
+                  className="sr-only"
+                />
+              </label>
+            )}
+          </div>
 
           <div className="flex flex-wrap gap-5 md:col-span-2">
             {[

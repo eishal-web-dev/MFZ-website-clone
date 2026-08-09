@@ -56,20 +56,21 @@ export default function AboutPage() {
           ===================================================== */}
 
           <section
-  className="
-    relative
-    -mt-[100px]
-    grid
-    min-h-[620px]
-    items-center
-    gap-10
-    py-12
-    md:grid-cols-2
-    md:gap-12
-    md:py-16
-    lg:min-h-[700px]
-  "
->
+            className="
+              relative
+              -mt-[80px]
+              grid
+              min-h-[620px]
+              items-center
+              gap-10
+              py-12
+              md:-mt-[100px]
+              md:grid-cols-2
+              md:gap-12
+              md:py-16
+              lg:min-h-[700px]
+            "
+          >
             <motion.div
               initial={{
                 opacity: 0,
@@ -128,7 +129,6 @@ export default function AboutPage() {
               </p>
             </motion.div>
 
-            {/* Real potato corndog image */}
             <motion.div
               initial={{
                 opacity: 0,
@@ -155,7 +155,6 @@ export default function AboutPage() {
                 md:min-h-[560px]
               "
             >
-              {/* Background glow */}
               <motion.div
                 animate={{
                   scale: [1, 1.08, 1],
@@ -180,7 +179,6 @@ export default function AboutPage() {
                 }}
               />
 
-              {/* Floating product */}
               <motion.div
                 animate={{
                   rotate: [-5, 5, -5],
@@ -217,10 +215,6 @@ export default function AboutPage() {
               </motion.div>
             </motion.div>
           </section>
-
-          {/* =====================================================
-              MISSION
-          ===================================================== */}
 
           <motion.section
             initial={{
@@ -306,10 +300,6 @@ export default function AboutPage() {
               your average corndog.
             </p>
           </motion.section>
-
-          {/* =====================================================
-              TIMELINE
-          ===================================================== */}
 
           <section className="mb-20">
             <div className="mb-10">
@@ -444,10 +434,6 @@ export default function AboutPage() {
               ))}
             </div>
           </section>
-
-          {/* =====================================================
-              FOUNDER STORY
-          ===================================================== */}
 
           <motion.section
             initial={{

@@ -1,10 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import {
-  Routes,
-  Route,
-  useLocation,
-} from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+
 import { ThemeProvider } from '@/context/ThemeContext';
 import { CartProvider } from '@/context/CartContext';
 import { LocationProvider } from '@/context/LocationContext';
@@ -19,20 +16,25 @@ import { InstallAppPrompt } from '@/components/InstallAppPrompt';
 import { LocationBadge } from '@/components/LocationBadge';
 import { AdminRoute } from '@/pages/admin/AdminRoute';
 
-const HomePage = lazy(() => import('@/pages/HomePage'));
-const MenuPage = lazy(() => import('@/pages/MenuPage'));
-const BuildPage = lazy(() => import('@/pages/BuildPage'));
-const LocationsPage = lazy(() => import('@/pages/LocationsPage'));
-const AboutPage = lazy(() => import('@/pages/AboutPage'));
-const ContactPage = lazy(() => import('@/pages/ContactPage'));
-const CheckoutPage = lazy(() => import('@/pages/CheckoutLocationPage'));
-const InstallAppPage = lazy(() => import('@/pages/InstallAppPage'));
+// Customer-facing pages are intentionally imported eagerly.
+// On some mobile browsers/PWA sessions, lazy route chunks could briefly fail
+// during client-side navigation after a fresh deployment, which sent the app
+// into the global ErrorBoundary until the user refreshed. Keeping the public
+// routes in the main bundle makes menu/contact/about/etc. navigation immediate
+// and reliable while admin-only screens stay lazy-loaded.
+import HomePage from '@/pages/HomePage';
+import MenuPage from '@/pages/MenuPage';
+import BuildPage from '@/pages/BuildPage';
+import LocationsPage from '@/pages/LocationsPage';
+import AboutPage from '@/pages/AboutPage';
+import ContactPage from '@/pages/ContactPage';
+import CheckoutPage from '@/pages/CheckoutLocationPage';
+import InstallAppPage from '@/pages/InstallAppPage';
+import MenuItemPage from '@/pages/MenuItemPage';
 import AuthPages from '@/pages/AuthPages';
+
 const AdminDashboardPage = lazy(
   () => import('@/pages/admin/AdminDashboardPage'),
-);
-const MenuItemPage = lazy(
-  () => import('@/pages/MenuItemPage'),
 );
 const AdminOrdersPage = lazy(
   () => import('@/pages/admin/AdminOrdersPage'),
@@ -57,57 +59,57 @@ function PageLoader() {
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => window.scrollTo(0, 0), [pathname]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname]);
+
   return null;
 }
 
 function AppRoutes() {
-  const location = useLocation();
-
   return (
     <>
       <ScrollToTop />
       <Navbar />
       <LocationBadge />
 
-      <AnimatePresence mode="wait">
-        <Suspense fallback={<PageLoader />}>
-          <Routes location={location} key={location.pathname}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/menu" element={<MenuPage />} />
-            <Route path="/build" element={<BuildPage />} />
-            <Route path="/locations" element={<LocationsPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/app" element={<InstallAppPage />} />
-            <Route path="/download" element={<InstallAppPage />} />
-            <Route path="/signin" element={<AuthPages.SignInPage />} />
-            <Route path="/signup" element={<AuthPages.SignUpPage />} />
-            <Route path="/forgot" element={<AuthPages.ForgotPage />} />
-            <Route path="/reset" element={<AuthPages.ResetPage />} />
-            <Route path="/verify" element={<AuthPages.VerifyPage />} />
-            <Route path="/menu/:productId" element={<MenuItemPage />} />
-            <Route
-              path="/admin/orders"
-              element={
-                <AdminRoute>
-                  <AdminOrdersPage />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <AdminRoute>
-                  <AdminDashboardPage />
-                </AdminRoute>
-              }
-            />
-            <Route path="*" element={<HomePage />} />
-          </Routes>
-        </Suspense>
-      </AnimatePresence>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/menu" element={<MenuPage />} />
+          <Route path="/build" element={<BuildPage />} />
+          <Route path="/locations" element={<LocationsPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/app" element={<InstallAppPage />} />
+          <Route path="/download" element={<InstallAppPage />} />
+          <Route path="/signin" element={<AuthPages.SignInPage />} />
+          <Route path="/signup" element={<AuthPages.SignUpPage />} />
+          <Route path="/forgot" element={<AuthPages.ForgotPage />} />
+          <Route path="/reset" element={<AuthPages.ResetPage />} />
+          <Route path="/verify" element={<AuthPages.VerifyPage />} />
+          <Route path="/menu/:productId" element={<MenuItemPage />} />
+          <Route
+            path="/admin/orders"
+            element={
+              <AdminRoute>
+                <AdminOrdersPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminDashboardPage />
+              </AdminRoute>
+            }
+          />
+          <Route path="*" element={<HomePage />} />
+        </Routes>
+      </Suspense>
 
       <CartDrawer />
     </>

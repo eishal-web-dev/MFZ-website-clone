@@ -202,7 +202,10 @@ export async function register(
       provider: 'local',
       isVerified: true,
       crunchPoints: 0,
-      role: 'customer',
+      role:
+        cleanEmail === process.env.ADMIN_EMAIL?.trim().toLowerCase()
+          ? 'admin'
+          : 'customer',
     });
 
     const token = createToken(
@@ -293,6 +296,18 @@ export async function login(
       });
 
       return;
+    }
+
+    const configuredAdminEmail =
+      process.env.ADMIN_EMAIL?.trim().toLowerCase();
+
+    if (
+      configuredAdminEmail &&
+      cleanEmail === configuredAdminEmail &&
+      user.role !== 'admin'
+    ) {
+      user.role = 'admin';
+      await user.save();
     }
 
     const token = createToken(

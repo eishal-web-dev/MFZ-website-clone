@@ -67,6 +67,12 @@ export function LocationBadge() {
       ? 'visible translate-x-0 opacity-100'
       : 'invisible -translate-x-2 opacity-0 group-hover:visible group-hover:translate-x-0 group-hover:opacity-100');
 
+  const iconClassName =
+    'flex shrink-0 items-center justify-center transition-all duration-300 ' +
+    (expanded
+      ? 'ml-6 h-14 w-14 rounded-2xl'
+      : 'ml-1.5 h-9 w-9 rounded-xl group-hover:ml-6 group-hover:h-14 group-hover:w-14 group-hover:rounded-2xl');
+
   return (
     <button
       type="button"
@@ -85,7 +91,7 @@ export function LocationBadge() {
       aria-expanded={expanded}
     >
       <span
-        className="ml-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-300 group-hover:ml-6 group-hover:h-14 group-hover:w-14 group-hover:rounded-2xl"
+        className={iconClassName}
         style={{
           background: active.accentColor,
           color: active.onAccent,

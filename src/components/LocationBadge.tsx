@@ -77,7 +77,7 @@ export function LocationBadge() {
     <button
       type="button"
       onClick={handleClick}
-      className="group fixed left-3 z-[85] flex max-w-[calc(100vw-24px)] items-center overflow-hidden rounded-3xl border text-left shadow-2xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 sm:left-5"
+      className="mfz-location-badge group fixed left-3 z-[85] flex max-w-[calc(100vw-24px)] items-center overflow-hidden rounded-3xl border text-left shadow-2xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 sm:left-5"
       style={{
         top: 'calc(var(--nav-h) + 10px)',
         width: expanded ? 'min(408px, calc(100vw - 24px))' : '48px',
@@ -115,7 +115,7 @@ export function LocationBadge() {
 
       <style>{`
         @media (hover: hover) and (pointer: fine) {
-          .group:hover {
+          .mfz-location-badge:hover {
             width: min(408px, calc(100vw - 24px)) !important;
             height: 108px !important;
           }

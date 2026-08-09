@@ -15,9 +15,9 @@ RUN cd server && npm ci
 
 COPY . ./
 
-# Production browser requests should use the API on the same Railway domain.
-# This fixes mobile auth/CORS issues and removes dependence on an old API URL.
-ENV VITE_API_BASE_URL=/api
+# The Railway frontend and backend are separate services. Send browser API
+# requests to the backend service, where MongoDB and JWT variables are set.
+ENV VITE_API_BASE_URL=https://mfz-website-clone-production.up.railway.app/api
 ENV VITE_API_URL=""
 
 RUN npm run build

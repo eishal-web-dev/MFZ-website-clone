@@ -5,7 +5,6 @@ import express from 'express';
 import cors, {
   type CorsOptions,
 } from 'cors';
-import mongoose from 'mongoose';
 
 import { connectDatabase } from './config/db.js';
 import adminRouter from './routes/admin.js';
@@ -17,6 +16,8 @@ const app = express();
 const port = Number(
   process.env.PORT ?? 5000,
 );
+
+let databaseReady = false;
 
 const allowedOrigins = new Set([
   'http://localhost:5173',
@@ -43,10 +44,6 @@ function isAllowedOrigin(origin: string): boolean {
   }
 
   return /^https:\/\/[a-z0-9-]+\.up\.railway\.app$/i.test(origin);
-}
-
-function isDatabaseReady(): boolean {
-  return mongoose.connection.readyState === 1;
 }
 
 const corsOptions: CorsOptions = {
@@ -102,25 +99,19 @@ app.use(
 );
 
 const healthPayload = () => ({
-  success: isDatabaseReady(),
-  message: isDatabaseReady()
-    ? 'MFZ API is running.'
-    : 'MFZ API is waiting for MongoDB.',
-  database: isDatabaseReady()
+  success: true,
+  message: 'MFZ API is running.',
+  database: databaseReady
     ? 'connected'
     : 'disconnected',
 });
 
 app.get('/health', (_request, response) => {
-  response
-    .status(isDatabaseReady() ? 200 : 503)
-    .json(healthPayload());
+  response.status(200).json(healthPayload());
 });
 
 app.get('/api/health', (_request, response) => {
-  response
-    .status(isDatabaseReady() ? 200 : 503)
-    .json(healthPayload());
+  response.status(200).json(healthPayload());
 });
 
 app.use('/api', (request, response, next) => {
@@ -129,11 +120,11 @@ app.use('/api', (request, response, next) => {
     return;
   }
 
-  if (!isDatabaseReady()) {
+  if (!databaseReady) {
     response.status(503).json({
       success: false,
       message:
-        'MFZ account service is reconnecting. Please try again in a moment.',
+        'MFZ account service cannot connect to MongoDB. Check MONGODB_URI in Railway.',
     });
     return;
   }
@@ -189,30 +180,18 @@ function startHttpServer(): void {
   );
 }
 
-async function startApplication(): Promise<void> {
+async function connectMongo(): Promise<void> {
   try {
-    // Do not expose the Railway service until MongoDB is actually ready.
-    // Railway's /api/health check will now only pass after this connection
-    // succeeds, preventing mobile users from reaching auth during startup.
     await connectDatabase();
-
-    mongoose.connection.on('disconnected', () => {
-      console.error('MongoDB disconnected. API requests will temporarily return 503.');
-    });
-
-    mongoose.connection.on('reconnected', () => {
-      console.log('MongoDB reconnected successfully.');
-    });
-
-    startHttpServer();
+    databaseReady = true;
   } catch (error) {
+    databaseReady = false;
     console.error(
-      'MFZ startup failed because MongoDB could not connect:',
+      'MongoDB connection failed. Website will stay online, but account/order APIs are unavailable until MongoDB is configured:',
       error,
     );
-
-    process.exit(1);
   }
 }
 
-void startApplication();
+startHttpServer();
+void connectMongo();

@@ -497,38 +497,6 @@ export function Navbar() {
               md:gap-2
             "
           >
-            {isAdmin && (
-              <Link
-                to="/admin"
-                className="
-                  hidden
-                  items-center
-                  gap-2
-                  rounded-full
-                  border
-                  px-3
-                  py-2
-                  text-xs
-                  font-black
-                  uppercase
-                  tracking-wide
-                  transition-transform
-                  hover:scale-105
-                  sm:flex
-                "
-                style={{
-                  borderColor: `${active.accentColor}66`,
-                  background: `${active.accentColor}18`,
-                  color: active.accentColor,
-                }}
-              >
-                <LayoutDashboard size={17} />
-                <span className="hidden xl:inline">
-                  Admin
-                </span>
-              </Link>
-            )}
-
             {/* Search */}
             <button
               type="button"

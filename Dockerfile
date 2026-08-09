@@ -17,7 +17,7 @@ COPY . ./
 
 # The Railway frontend and backend are separate services. Send browser API
 # requests to the backend service, where MongoDB and JWT variables are set.
-ENV VITE_API_BASE_URL=https://mfz-website-clone-production.up.railway.app/api
+ENV VITE_API_BASE_URL=https://mfz-website-backend-production.up.railway.app/api
 ENV VITE_API_URL=""
 
 RUN npm run build

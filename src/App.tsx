@@ -39,6 +39,9 @@ const AdminDashboardPage = lazy(
 const AdminOrdersPage = lazy(
   () => import('@/pages/admin/AdminOrdersPage'),
 );
+const AdminProductsPage = lazy(
+  () => import('@/pages/admin/AdminProductsPage'),
+);
 
 function PageLoader() {
   return (
@@ -91,6 +94,14 @@ function AppRoutes() {
           <Route path="/reset" element={<AuthPages.ResetPage />} />
           <Route path="/verify" element={<AuthPages.VerifyPage />} />
           <Route path="/menu/:productId" element={<MenuItemPage />} />
+          <Route
+            path="/admin/products"
+            element={
+              <AdminRoute>
+                <AdminProductsPage />
+              </AdminRoute>
+            }
+          />
           <Route
             path="/admin/orders"
             element={

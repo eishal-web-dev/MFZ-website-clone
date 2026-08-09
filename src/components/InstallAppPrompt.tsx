@@ -1,103 +1,100 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Download, Smartphone, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 import { useTheme } from '@/context/ThemeContext';
 import { useDeliveryLocation } from '@/context/LocationContext';
-
-interface DeferredInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{
-    outcome: 'accepted' | 'dismissed';
-    platform: string;
-  }>;
-}
+import { usePWAInstall } from '@/context/PWAInstallContext';
 
 const DISMISSED_KEY = 'mfz-pwa-install-dismissed-at';
-const INSTALLED_KEY = 'mfz-pwa-installed';
 const SHOW_AFTER_MS = 45000;
 const REMIND_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 
 export function InstallAppPrompt() {
   const { activeProduct: active } = useTheme();
   const { selectorOpen } = useDeliveryLocation();
-  const [deferredPrompt, setDeferredPrompt] =
-    useState<DeferredInstallPromptEvent | null>(null);
+  const {
+    canInstall,
+    isIOS,
+    isStandalone,
+    isInstalled,
+    install,
+  } = usePWAInstall();
+
   const [timeReady, setTimeReady] = useState(false);
   const [open, setOpen] = useState(false);
   const [iosHelp, setIosHelp] = useState(false);
 
-  const isStandalone = useMemo(() => {
-    if (typeof window === 'undefined') return false;
-    return (
-      window.matchMedia('(display-mode: standalone)').matches ||
-      Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone)
+  useEffect(() => {
+    if (isStandalone || isInstalled) return;
+
+    const dismissedAt = Number(
+      localStorage.getItem(DISMISSED_KEY) || 0,
     );
-  }, []);
 
-  const isIOS = useMemo(() => {
-    if (typeof navigator === 'undefined') return false;
-    return /iphone|ipad|ipod/i.test(navigator.userAgent);
-  }, []);
+    if (
+      dismissedAt &&
+      Date.now() - dismissedAt < REMIND_AFTER_MS
+    ) {
+      return;
+    }
 
-  useEffect(() => {
-    if (isStandalone || localStorage.getItem(INSTALLED_KEY) === '1') return;
+    const timer = window.setTimeout(
+      () => setTimeReady(true),
+      SHOW_AFTER_MS,
+    );
 
-    const dismissedAt = Number(localStorage.getItem(DISMISSED_KEY) || 0);
-    if (dismissedAt && Date.now() - dismissedAt < REMIND_AFTER_MS) return;
-
-    const timer = window.setTimeout(() => setTimeReady(true), SHOW_AFTER_MS);
-
-    const handleBeforeInstall = (event: Event) => {
-      const installEvent = event as DeferredInstallPromptEvent;
-      installEvent.preventDefault();
-      setDeferredPrompt(installEvent);
-    };
-
-    const handleInstalled = () => {
-      localStorage.setItem(INSTALLED_KEY, '1');
-      setOpen(false);
-      setDeferredPrompt(null);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-    window.addEventListener('appinstalled', handleInstalled);
-
-    return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
-      window.removeEventListener('appinstalled', handleInstalled);
-    };
-  }, [isStandalone]);
+    return () => window.clearTimeout(timer);
+  }, [isInstalled, isStandalone]);
 
   useEffect(() => {
-    if (!timeReady || selectorOpen || isStandalone) return;
-    if (!deferredPrompt && !isIOS) return;
+    if (
+      !timeReady ||
+      selectorOpen ||
+      isStandalone ||
+      isInstalled
+    ) {
+      return;
+    }
+
+    if (!canInstall && !isIOS) return;
     setOpen(true);
-  }, [deferredPrompt, isIOS, isStandalone, selectorOpen, timeReady]);
+  }, [
+    canInstall,
+    isIOS,
+    isInstalled,
+    isStandalone,
+    selectorOpen,
+    timeReady,
+  ]);
 
   const dismiss = () => {
-    localStorage.setItem(DISMISSED_KEY, String(Date.now()));
+    localStorage.setItem(
+      DISMISSED_KEY,
+      String(Date.now()),
+    );
     setOpen(false);
     setIosHelp(false);
   };
 
-  const install = async () => {
-    if (deferredPrompt) {
-      await deferredPrompt.prompt();
-      const choice = await deferredPrompt.userChoice;
-      if (choice.outcome === 'accepted') {
-        localStorage.setItem(INSTALLED_KEY, '1');
-        setOpen(false);
-      } else {
-        localStorage.setItem(DISMISSED_KEY, String(Date.now()));
-      }
-      setDeferredPrompt(null);
+  const handleInstall = async () => {
+    const result = await install();
+
+    if (result === 'ios') {
+      setIosHelp(true);
       return;
     }
 
-    if (isIOS) {
-      setIosHelp(true);
+    if (result === 'accepted' || result === 'installed') {
+      setOpen(false);
+      return;
+    }
+
+    if (result === 'dismissed') {
+      localStorage.setItem(
+        DISMISSED_KEY,
+        String(Date.now()),
+      );
     }
   };
 
@@ -131,16 +128,25 @@ export function InstallAppPrompt() {
           <div className="flex items-start gap-3 pr-8 sm:gap-4">
             <div
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl sm:h-14 sm:w-14"
-              style={{ background: active.accentColor, color: active.onAccent }}
+              style={{
+                background: active.accentColor,
+                color: active.onAccent,
+              }}
             >
               <Smartphone size={24} />
             </div>
 
             <div className="min-w-0">
-              <div className="text-[9px] font-black uppercase tracking-[.25em]" style={{ color: active.accentColor }}>
+              <div
+                className="text-[9px] font-black uppercase tracking-[.25em]"
+                style={{ color: active.accentColor }}
+              >
                 MFZ in your pocket
               </div>
-              <h3 className="mt-1 text-xl font-black leading-tight sm:text-2xl" style={{ fontFamily: 'Anton, sans-serif' }}>
+              <h3
+                className="mt-1 text-xl font-black leading-tight sm:text-2xl"
+                style={{ fontFamily: 'Anton, sans-serif' }}
+              >
                 Install the MFZ app?
               </h3>
               <p className="mt-1.5 text-xs leading-5 opacity-60 sm:text-sm">
@@ -150,7 +156,13 @@ export function InstallAppPrompt() {
           </div>
 
           {iosHelp ? (
-            <div className="mt-4 rounded-2xl border p-3.5 text-xs leading-5" style={{ background: `${active.accentColor}0D`, borderColor: `${active.accentColor}30` }}>
+            <div
+              className="mt-4 rounded-2xl border p-3.5 text-xs leading-5"
+              style={{
+                background: `${active.accentColor}0D`,
+                borderColor: `${active.accentColor}30`,
+              }}
+            >
               On iPhone/iPad: tap <strong>Share</strong> in Safari, then choose <strong>Add to Home Screen</strong> and confirm <strong>Add</strong>.
             </div>
           ) : (
@@ -165,9 +177,12 @@ export function InstallAppPrompt() {
               </button>
               <button
                 type="button"
-                onClick={install}
+                onClick={handleInstall}
                 className="flex items-center justify-center gap-2 rounded-full px-4 py-3 text-[10px] font-black uppercase tracking-wider"
-                style={{ background: active.accentColor, color: active.onAccent }}
+                style={{
+                  background: active.accentColor,
+                  color: active.onAccent,
+                }}
               >
                 <Download size={15} /> Install app
               </button>

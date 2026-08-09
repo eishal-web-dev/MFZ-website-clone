@@ -35,7 +35,6 @@ export function LocationBadge() {
 
     if (
       savedAt &&
-      previousSavedAt.current &&
       savedAt !== previousSavedAt.current
     ) {
       showTemporarily();

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, Flame, Heart, X, Minus, MessageCircle } from 'lucide-react';
 import { menuItems, menuCategories, formatPKR, type MenuItem } from '@/data/menu';
@@ -6,15 +6,18 @@ import { useTheme } from '@/context/ThemeContext';
 import { useCart } from '@/context/CartContext';
 import { Footer } from '@/components/Footer';
 import {
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-
-import {
   useNavigate,
   useSearchParams,
 } from 'react-router-dom';
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  'https://mfz-website-backend-production.up.railway.app/api';
+
+interface ProductsResponse {
+  success: boolean;
+  products?: MenuItem[];
+}
 
 export default function MenuPage() {
   const { activeProduct } = useTheme();
@@ -31,6 +34,41 @@ const [searchParams] = useSearchParams();
   const [favourites, setFavourites] = useState<number[]>([]);
   const [detail, setDetail] = useState<MenuItem | null>(null);
   const [detailQty, setDetailQty] = useState(1);
+  const [adminProducts, setAdminProducts] = useState<MenuItem[]>([]);
+
+  const allMenuItems = useMemo(
+    () => [...adminProducts, ...menuItems],
+    [adminProducts],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch(`${API_BASE_URL}/products`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Unable to load admin products.');
+        }
+
+        return response.json() as Promise<ProductsResponse>;
+      })
+      .then((data) => {
+        if (
+          !cancelled &&
+          data.success &&
+          Array.isArray(data.products)
+        ) {
+          setAdminProducts(data.products);
+        }
+      })
+      .catch((error) => {
+        console.error('Unable to load admin products:', error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 useEffect(() => {
   const itemId =
     searchParams.get('item');
@@ -40,7 +78,7 @@ useEffect(() => {
   }
 
   const selectedItem =
-    menuItems.find(
+    allMenuItems.find(
       (item) =>
         String(item.id) === itemId,
     );
@@ -49,11 +87,11 @@ useEffect(() => {
     setDetail(selectedItem);
     setDetailQty(1);
   }
-}, [searchParams]);
+}, [searchParams, allMenuItems]);
   const filtered = useMemo(() => {
   const normalizedQuery = query.trim().toLowerCase();
 
-  return menuItems.filter((item) => {
+  return allMenuItems.filter((item) => {
     const matchesCategory =
       category === 'All'
         ? true
@@ -98,6 +136,7 @@ useEffect(() => {
   cheeseFilter,
   sausageFilter,
   maxPrice,
+  allMenuItems,
 ]);
 
   const toggleFav = (id: number) =>

@@ -8,6 +8,7 @@ import { AnimatePresence } from 'framer-motion';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { CartProvider } from '@/context/CartContext';
 import { LocationProvider } from '@/context/LocationContext';
+import { PWAInstallProvider } from '@/context/PWAInstallContext';
 import { Navbar } from '@/components/Navbar';
 import { CartDrawer } from '@/components/CartDrawer';
 import { LoadingScreen } from '@/components/LoadingScreen';
@@ -25,6 +26,7 @@ const LocationsPage = lazy(() => import('@/pages/LocationsPage'));
 const AboutPage = lazy(() => import('@/pages/AboutPage'));
 const ContactPage = lazy(() => import('@/pages/ContactPage'));
 const CheckoutPage = lazy(() => import('@/pages/CheckoutLocationPage'));
+const InstallAppPage = lazy(() => import('@/pages/InstallAppPage'));
 import AuthPages from '@/pages/AuthPages';
 const AdminDashboardPage = lazy(
   () => import('@/pages/admin/AdminDashboardPage'),
@@ -78,6 +80,8 @@ function AppRoutes() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/app" element={<InstallAppPage />} />
+            <Route path="/download" element={<InstallAppPage />} />
             <Route path="/signin" element={<AuthPages.SignInPage />} />
             <Route path="/signup" element={<AuthPages.SignUpPage />} />
             <Route path="/forgot" element={<AuthPages.ForgotPage />} />
@@ -127,23 +131,19 @@ export default function App() {
     <ErrorBoundary>
       <ThemeProvider>
         <LocationProvider>
-          <CartProvider>
-            <AnimatePresence>
-              {loading && <LoadingScreen />}
-            </AnimatePresence>
+          <PWAInstallProvider>
+            <CartProvider>
+              <AnimatePresence>
+                {loading && <LoadingScreen />}
+              </AnimatePresence>
 
-            <AppRoutes />
+              <AppRoutes />
 
-            {/* After the loader, the browser's native geolocation permission
-                appears first. If the user blocks it or GPS is unavailable,
-                AutoLocationResolver opens the themed manual 3-step picker. */}
-            <AutoLocationResolver enabled={!loading} />
-            <DeliveryLocationModalV2 enabled={!loading} />
-
-            {/* Delayed install CTA. Chromium gets the real native PWA install
-                dialog; iOS receives Add-to-Home-Screen instructions. */}
-            <InstallAppPrompt />
-          </CartProvider>
+              <AutoLocationResolver enabled={!loading} />
+              <DeliveryLocationModalV2 enabled={!loading} />
+              <InstallAppPrompt />
+            </CartProvider>
+          </PWAInstallProvider>
         </LocationProvider>
       </ThemeProvider>
     </ErrorBoundary>

@@ -136,7 +136,7 @@ export function DeliveryLocationModalV2({ enabled }: Props) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[360] flex items-end justify-center overflow-hidden p-0 sm:items-center sm:p-5"
+          className="fixed inset-0 z-[360] flex items-end justify-center overflow-hidden px-2 pb-[max(34px,env(safe-area-inset-bottom))] pt-2 sm:items-center sm:p-5"
           style={{
             background: 'rgba(8,5,4,.72)',
             backdropFilter: 'blur(20px) saturate(.72)',
@@ -151,7 +151,7 @@ export function DeliveryLocationModalV2({ enabled }: Props) {
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 30, opacity: 0, scale: 0.99 }}
             transition={{ type: 'spring', stiffness: 260, damping: 28 }}
-            className="relative flex max-h-[94svh] w-full max-w-[760px] flex-col overflow-hidden rounded-t-[28px] border border-b-0 shadow-2xl sm:max-h-[88svh] sm:rounded-[32px] sm:border-b"
+            className="relative flex max-h-[calc(100svh-44px)] w-full max-w-[760px] flex-col overflow-hidden rounded-[28px] border shadow-2xl sm:max-h-[88svh] sm:rounded-[32px]"
             style={{
               background: `linear-gradient(145deg, ${active.bgColor}FA, ${active.dominantColor}F2)`,
               borderColor: `${active.accentColor}45`,

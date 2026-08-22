@@ -1,0 +1,230 @@
+/* Love Luxury visual upgrades — layered on top of the MFZ-derived layout */
+
+.lux-product,
+.lux-product__inner {
+  isolation: isolate;
+}
+
+.lux-product__inner::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(72%, 470px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.17) 0%, rgba(255,255,255,.055) 32%, transparent 70%);
+  filter: blur(22px);
+  z-index: -2;
+  pointer-events: none;
+}
+
+.lux-product__inner::after {
+  content: '';
+  position: absolute;
+  left: 21%;
+  right: 18%;
+  bottom: 8%;
+  height: 8%;
+  border-radius: 50%;
+  background: rgba(0,0,0,.6);
+  filter: blur(26px);
+  opacity: .62;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* The source catalogue photos have light studio backgrounds. Multiply visually
+   removes those pale rectangles against the dark MFZ-style stage. */
+.lux-product__inner img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  mix-blend-mode: multiply !important;
+  image-rendering: auto;
+  backface-visibility: hidden;
+  transform-origin: center center;
+  filter:
+    contrast(1.18)
+    saturate(1.10)
+    brightness(1.13)
+    drop-shadow(0 32px 42px rgba(0,0,0,.48))
+    drop-shadow(0 0 24px rgba(255,205,145,.12)) !important;
+  -webkit-font-smoothing: antialiased;
+  will-change: transform;
+}
+
+/* Extra crispness and size without changing the MFZ geometry. */
+.product-stage {
+  overflow: visible !important;
+}
+
+.lux-product {
+  width: clamp(330px, 41vw, 610px) !important;
+  height: clamp(410px, 60vh, 760px) !important;
+}
+
+.circular-track {
+  box-shadow: 0 0 80px rgba(255,255,255,.025), inset 0 0 60px rgba(255,255,255,.018);
+}
+
+.floating-detail {
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow: 0 10px 34px rgba(0,0,0,.26);
+}
+
+/* ===== Hermès loader ===== */
+.lux-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #fff5e8;
+  background:
+    radial-gradient(circle at 50% 39%, rgba(206,105,48,.34), transparent 25%),
+    radial-gradient(circle at 50% 50%, #4a1c0d 0%, #211009 42%, #0d0806 76%, #080504 100%);
+}
+
+.lux-loader__grain {
+  position: absolute;
+  inset: 0;
+  opacity: .04;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
+}
+
+.lux-loader__word {
+  position: absolute;
+  left: 50%;
+  top: 49%;
+  transform: translate(-50%, -50%);
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(130px, 25vw, 430px);
+  font-weight: 900;
+  line-height: .8;
+  letter-spacing: -.045em;
+  white-space: nowrap;
+  opacity: .035;
+  user-select: none;
+}
+
+.lux-loader__content {
+  position: relative;
+  z-index: 2;
+  width: min(92vw, 640px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lux-loader__bag-stage {
+  position: relative;
+  width: min(76vw, 390px);
+  aspect-ratio: 1.18 / 1;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+}
+
+.lux-loader__halo {
+  position: absolute;
+  width: 88%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,197,127,.31) 0%, rgba(212,109,50,.13) 34%, transparent 72%);
+  filter: blur(38px);
+  z-index: -2;
+}
+
+.lux-loader__bag-stage::after {
+  content: '';
+  position: absolute;
+  width: 60%;
+  height: 8%;
+  left: 50%;
+  bottom: 8%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: rgba(0,0,0,.72);
+  filter: blur(23px);
+  z-index: -1;
+}
+
+.lux-loader__bag {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  filter:
+    contrast(1.19)
+    saturate(1.12)
+    brightness(1.14)
+    drop-shadow(0 30px 42px rgba(0,0,0,.5))
+    drop-shadow(0 0 22px rgba(255,196,127,.18));
+}
+
+.lux-loader__copy {
+  margin-top: -5px;
+  text-align: center;
+}
+
+.lux-loader__brand {
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(34px, 5vw, 58px);
+  line-height: .9;
+  letter-spacing: .015em;
+}
+
+.lux-loader__brand span {
+  color: #ffc47f;
+}
+
+.lux-loader__eyebrow {
+  margin-top: 12px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .32em;
+  opacity: .62;
+}
+
+.lux-loader__track {
+  width: min(72vw, 310px);
+  height: 2px;
+  margin-top: 24px;
+  overflow: hidden;
+  background: rgba(255,255,255,.12);
+}
+
+.lux-loader__track span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #a45127, #ffc47f, #fff0da);
+  box-shadow: 0 0 16px rgba(255,196,127,.55);
+}
+
+@media (max-width: 900px) {
+  .lux-product {
+    width: min(82vw, 520px) !important;
+    height: min(58vh, 620px) !important;
+  }
+
+  .lux-product__inner img {
+    filter:
+      contrast(1.16)
+      saturate(1.08)
+      brightness(1.12)
+      drop-shadow(0 22px 30px rgba(0,0,0,.42)) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lux-loader__bag,
+  .lux-product__inner img {
+    will-change: auto;
+  }
+}

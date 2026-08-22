@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion, useScroll, useSpring, useTransform } from 'framer-motion';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-  ArrowDown,
-  ArrowLeft,
   ArrowRight,
-  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
   Gem,
   Menu,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
   Star,
   Watch,
@@ -16,300 +16,185 @@ import {
 
 const LIVE = 'https://loveluxury.com/uk/';
 
-const slides = [
+type LuxurySlide = {
+  id: string;
+  shortName: string;
+  name: string;
+  category: string;
+  tagline: string;
+  description: string;
+  image: string;
+  bgGradient: string;
+  dominantColor: string;
+  accentColor: string;
+  textColor: string;
+  onAccent: string;
+  backgroundWord: string;
+  details: string[];
+  cta: string;
+  link: string;
+  rotation: number;
+  scale: number;
+};
+
+const slides: LuxurySlide[] = [
   {
     id: '01',
-    category: 'HAND BAGS',
-    kicker: 'THE HOUSE OF HERMÈS',
-    title: ['OBJECTS', 'OF DESIRE.'],
-    copy: 'Exceptional Hermès pieces, selected for collectors who know exactly what they are looking at.',
-    image: 'https://loveluxury.com/wp-content/uploads/2025/10/Hermes-Birkin-25-Orange-Minimum-Togo-Palladium-Hardware-2023-1-1024x683.jpg',
-    bg: '#f1e9dd',
-    ink: '#17140f',
-    accent: '#c36f32',
-    link: 'https://loveluxury.com/uk/shop/hermes/',
-    imageScale: 1.08,
+    shortName: 'BIRKIN 25',
+    name: 'HERMÈS BIRKIN 25',
+    category: 'HANDBAGS',
+    tagline: 'The icon, curated.',
+    description:
+      'A collector-first way to discover exceptional Hermès pieces — authenticated, beautifully presented and ready for a private appointment.',
+    image:
+      'https://loveluxury.com/wp-content/uploads/2025/10/Hermes-Birkin-25-Orange-Minimum-Togo-Palladium-Hardware-2023-1-1024x683.jpg',
+    bgGradient:
+      'radial-gradient(circle at 68% 42%, #743719 0%, #3b180e 28%, #190b08 62%, #0d0806 100%)',
+    dominantColor: '#d46d32',
+    accentColor: '#ffc47f',
+    textColor: '#fff5e8',
+    onAccent: '#1a0c06',
+    backgroundWord: 'HERMÈS',
+    details: ['TOGO LEATHER', 'PALLADIUM', '2023'],
+    cta: 'SHOP HERMÈS',
+    link: `${LIVE}shop/hermes/`,
+    rotation: -5,
+    scale: 1.12,
   },
   {
     id: '02',
+    shortName: 'NAUTILUS',
+    name: 'PATEK NAUTILUS',
     category: 'WATCHES',
-    kicker: 'RARE TIMEPIECES',
-    title: ['TIME,', 'CURATED.'],
-    copy: 'Rolex, Patek Philippe, Audemars Piguet and Richard Mille — chosen with the eye of a private collector.',
-    image: 'https://loveluxury.com/uk/wp-content/uploads/sites/2/sites/2/2025/08/Patek-Philippe-Nautilus-Olive-Green-32-Baguette-Diamonds-Bezel-5711-1300A-1-1024x683.jpg',
-    bg: '#dfe1d4',
-    ink: '#111610',
-    accent: '#66705a',
-    link: 'https://loveluxury.com/uk/shop/watches/',
-    imageScale: 0.92,
+    tagline: 'Rare time. No compromise.',
+    description:
+      'Exceptional watches from the most important maisons, selected for collectors who care about provenance, condition and rarity.',
+    image:
+      'https://loveluxury.com/uk/wp-content/uploads/sites/2/sites/2/2025/08/Patek-Philippe-Nautilus-Olive-Green-32-Baguette-Diamonds-Bezel-5711-1300A-1-1024x683.jpg',
+    bgGradient:
+      'radial-gradient(circle at 68% 42%, #53624d 0%, #283329 28%, #111813 62%, #080b09 100%)',
+    dominantColor: '#6d8066',
+    accentColor: '#d8e5ba',
+    textColor: '#f6f9ee',
+    onAccent: '#0e150f',
+    backgroundWord: 'PATEK',
+    details: ['5711 / 1300A', 'OLIVE', 'BAGUETTE'],
+    cta: 'SHOP WATCHES',
+    link: `${LIVE}shop/watches/`,
+    rotation: 4,
+    scale: 1.02,
   },
   {
     id: '03',
+    shortName: 'ALHAMBRA',
+    name: 'VAN CLEEF ALHAMBRA',
     category: 'JEWELLERY',
-    kicker: 'PRECIOUS DETAILS',
-    title: ['KEEP', 'FOREVER.'],
-    copy: 'Cartier and Van Cleef & Arpels, presented with the quiet confidence that real luxury deserves.',
-    image: 'https://loveluxury.com/wp-content/uploads/2026/05/Van-Cleef-Arpels-Vintage-Alhambra-Carnelian-18K-Yellow-Gold-5-Motifs-Bracelet-2024-6438-1-1024x683.jpeg',
-    bg: '#efe6df',
-    ink: '#21100f',
-    accent: '#8f171c',
-    link: 'https://loveluxury.com/uk/shop/jewellery/',
-    imageScale: 0.94,
-  },
-] as const;
-
-const categories = [
-  {
-    number: '01',
-    label: 'Handbags',
-    sub: 'Hermès · Chanel',
-    image: 'https://loveluxury.com/wp-content/uploads/2025/10/Hermes-Birkin-25-Orange-Minimum-Togo-Palladium-Hardware-2023-1-1024x683.jpg',
-    href: 'https://loveluxury.com/uk/shop/handbags/',
-  },
-  {
-    number: '02',
-    label: 'Watches',
-    sub: 'Rolex · Patek Philippe · AP',
-    image: 'https://loveluxury.com/uk/wp-content/uploads/sites/2/sites/2/2025/08/Patek-Philippe-Nautilus-Olive-Green-32-Baguette-Diamonds-Bezel-5711-1300A-1-1024x683.jpg',
-    href: 'https://loveluxury.com/uk/shop/watches/',
-  },
-  {
-    number: '03',
-    label: 'Jewellery',
-    sub: 'Cartier · Van Cleef & Arpels',
-    image: 'https://loveluxury.com/wp-content/uploads/2026/05/Van-Cleef-Arpels-Vintage-Alhambra-Carnelian-18K-Yellow-Gold-5-Motifs-Bracelet-2024-6438-1-1024x683.jpeg',
-    href: 'https://loveluxury.com/uk/shop/jewellery/',
+    tagline: 'Made to keep forever.',
+    description:
+      'Signature jewellery from Van Cleef & Arpels, Cartier and the world’s most celebrated houses, presented like objects of art.',
+    image:
+      'https://loveluxury.com/wp-content/uploads/2026/05/Van-Cleef-Arpels-Vintage-Alhambra-Carnelian-18K-Yellow-Gold-5-Motifs-Bracelet-2024-6438-1-1024x683.jpeg',
+    bgGradient:
+      'radial-gradient(circle at 68% 42%, #7b2427 0%, #451114 30%, #1d090b 64%, #0d0607 100%)',
+    dominantColor: '#9d2d32',
+    accentColor: '#f1bd78',
+    textColor: '#fff3e8',
+    onAccent: '#1c090a',
+    backgroundWord: 'VAN CLEEF',
+    details: ['CARNELIAN', '18K GOLD', '5 MOTIFS'],
+    cta: 'SHOP JEWELLERY',
+    link: `${LIVE}shop/jewellery/`,
+    rotation: -2,
+    scale: 1.04,
   },
 ];
 
-function SplitTitle({ lines }: { lines: readonly string[] }) {
+const titleContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.055, delayChildren: 0.1 } },
+  exit: { transition: { staggerChildren: 0.025, staggerDirection: -1 } },
+};
+
+const titleItem = {
+  hidden: { opacity: 0, y: 18 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.42, ease: [0.22, 1, 0.36, 1] as const },
+  },
+  exit: { opacity: 0, y: -14, transition: { duration: 0.2 } },
+};
+
+function MaskedTitle({ text }: { text: string }) {
   return (
-    <span className="split-title">
-      {lines.map((line, lineIndex) => (
-        <span className="split-title__line" key={line}>
-          {line.split(' ').map((word, wordIndex) => (
-            <span className="split-title__mask" key={`${word}-${wordIndex}`}>
-              <motion.span
-                initial={{ y: '110%' }}
-                animate={{ y: 0 }}
-                transition={{
-                  duration: 0.82,
-                  delay: 0.08 + lineIndex * 0.07 + wordIndex * 0.055,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-              >
-                {word}&nbsp;
-              </motion.span>
-            </span>
-          ))}
+    <span className="masked-title">
+      {text.split(' ').map((word, index) => (
+        <span className="masked-title__mask" key={`${word}-${index}`}>
+          <motion.span
+            initial={{ y: '112%' }}
+            animate={{ y: 0 }}
+            transition={{
+              delay: 0.1 + index * 0.075,
+              duration: 0.52,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            {word}&nbsp;
+          </motion.span>
         </span>
       ))}
     </span>
   );
 }
 
-function MagneticLink({ href, children, light = false }: { href: string; children: React.ReactNode; light?: boolean }) {
-  return (
-    <motion.a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className={`magnetic-link ${light ? 'magnetic-link--light' : ''}`}
-      whileHover={{ x: 4 }}
-      transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-    >
-      <span>{children}</span>
-      <ArrowUpRight size={15} strokeWidth={1.6} />
-    </motion.a>
-  );
-}
-
-function Hero() {
-  const [index, setIndex] = useState(0);
-  const [direction, setDirection] = useState(1);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const [reduced, setReduced] = useState(false);
-  const sectionRef = useRef<HTMLElement>(null);
-  const slide = slides[index];
-
-  useEffect(() => {
-    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(query.matches);
-    update();
-    query.addEventListener('change', update);
-    return () => query.removeEventListener('change', update);
-  }, []);
-
-  const go = (next: number) => {
-    setDirection(next > index || (index === slides.length - 1 && next === 0) ? 1 : -1);
-    setIndex(next);
-  };
-
-  const previous = () => go((index - 1 + slides.length) % slides.length);
-  const next = () => go((index + 1) % slides.length);
-
-  const handlePointerMove = (event: React.PointerEvent<HTMLElement>) => {
-    if (reduced || !sectionRef.current) return;
-    const rect = sectionRef.current.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width - 0.5;
-    const y = (event.clientY - rect.top) / rect.height - 0.5;
-    setTilt({ x: y * -7, y: x * 10 });
-  };
-
-  return (
-    <section
-      ref={sectionRef}
-      className="hero"
-      style={{ background: slide.bg, color: slide.ink }}
-      onPointerMove={handlePointerMove}
-      onPointerLeave={() => setTilt({ x: 0, y: 0 })}
-    >
-      <div className="hero__grain" />
-      <div className="hero__hairline" />
-
-      <motion.div
-        className="hero__glow"
-        animate={{ backgroundColor: `${slide.accent}33`, scale: reduced ? 1 : [1, 1.08, 1] }}
-        transition={{ backgroundColor: { duration: 0.8 }, scale: { duration: 6, repeat: Infinity } }}
-      />
-
-      <div className="hero__sparks" aria-hidden="true">
-        {Array.from({ length: 18 }).map((_, i) => (
-          <motion.i
-            key={i}
-            style={{
-              left: `${8 + ((i * 17) % 87)}%`,
-              top: `${14 + ((i * 29) % 73)}%`,
-              background: slide.accent,
-            }}
-            animate={reduced ? undefined : { y: [0, -18, 0], opacity: [0.08, 0.5, 0.08] }}
-            transition={{ duration: 4.5 + (i % 5), repeat: Infinity, delay: i * 0.14 }}
-          />
-        ))}
-      </div>
-
-      <div className="hero__content page-shell">
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            className="hero__copy"
-            key={`copy-${slide.id}`}
-            custom={direction}
-            initial={{ opacity: 0, x: direction * 28 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: direction * -22 }}
-            transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="hero__meta">
-              <span>{slide.id} / 03</span>
-              <span>{slide.category}</span>
-            </div>
-            <p className="eyebrow">{slide.kicker}</p>
-            <h1><SplitTitle lines={slide.title} /></h1>
-            <p className="hero__description">{slide.copy}</p>
-            <div className="hero__actions">
-              <MagneticLink href={slide.link}>Explore collection</MagneticLink>
-              <a className="text-link" href="https://loveluxury.com/uk/sell/" target="_blank" rel="noreferrer">
-                Sell with Love Luxury
-              </a>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-
-        <div className="hero__stage">
-          <span className="hero__vertical">KNIGHTSBRIDGE · LONDON</span>
-          <div className="hero__orbit hero__orbit--one" />
-          <div className="hero__orbit hero__orbit--two" />
-          <AnimatePresence mode="popLayout" custom={direction}>
-            <motion.div
-              key={slide.id}
-              className="hero__product-wrap"
-              custom={direction}
-              initial={{ opacity: 0, x: direction * 110, y: 30, scale: 0.72, rotate: direction * 9, filter: 'blur(8px)' }}
-              animate={{ opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, x: direction * -100, y: -22, scale: 0.78, rotate: direction * -8, filter: 'blur(8px)' }}
-              transition={{ duration: reduced ? 0.01 : 0.72, ease: [0.22, 1, 0.36, 1] }}
-              style={{ perspective: 1200 }}
-            >
-              <motion.div
-                className="hero__product-inner"
-                animate={reduced ? undefined : { y: [0, -12, 0] }}
-                transition={{ duration: 5.6, repeat: Infinity, ease: 'easeInOut' }}
-                style={{ rotateX: tilt.x, rotateY: tilt.y }}
-              >
-                <img
-                  src={slide.image}
-                  alt={`${slide.category} at Love Luxury`}
-                  fetchPriority="high"
-                  draggable={false}
-                  style={{ transform: `scale(${slide.imageScale})` }}
-                />
-                <span className="hero__shadow" style={{ background: `${slide.accent}55` }} />
-              </motion.div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </div>
-
-      <div className="hero__bottom page-shell">
-        <div className="hero__controls">
-          <button onClick={previous} aria-label="Previous collection"><ArrowLeft size={17} /></button>
-          <div className="hero__progress">
-            {slides.map((item, itemIndex) => (
-              <button
-                key={item.id}
-                onClick={() => go(itemIndex)}
-                className={itemIndex === index ? 'is-active' : ''}
-                aria-label={`Go to ${item.category}`}
-              >
-                <span />
-              </button>
-            ))}
-          </div>
-          <button onClick={next} aria-label="Next collection"><ArrowRight size={17} /></button>
-        </div>
-        <a href="#collections" className="hero__scroll"><ArrowDown size={15} /> Scroll to discover</a>
-        <div className="hero__trust"><Star size={13} fill="currentColor" /> 4.9 / 5 · 927 reviews</div>
-      </div>
-    </section>
-  );
-}
-
 function Navbar() {
   const [open, setOpen] = useState(false);
-  const links = useMemo(() => [
-    ['Shop', `${LIVE}shop/`],
-    ['Handbags', `${LIVE}shop/handbags/`],
-    ['Watches', `${LIVE}shop/watches/`],
-    ['Jewellery', `${LIVE}shop/jewellery/`],
-    ['Sell', `${LIVE}sell/`],
-  ], []);
 
   return (
     <>
-      <nav className="nav">
-        <div className="page-shell nav__inner">
-          <button className="nav__menu" onClick={() => setOpen(true)} aria-label="Open menu"><Menu size={19} /></button>
-          <a className="nav__wordmark" href="#top" aria-label="Love Luxury home">LOVE <span>LUXURY</span></a>
-          <div className="nav__links">
-            {links.map(([label, href]) => <a key={label} href={href} target="_blank" rel="noreferrer">{label}</a>)}
+      <nav className="mfz-nav">
+        <div className="mfz-shell mfz-nav__inner">
+          <a className="mfz-nav__logo" href="#top">
+            LOVE <span>LUXURY</span>
+          </a>
+
+          <div className="mfz-nav__links">
+            <a href={`${LIVE}shop/`} target="_blank" rel="noreferrer">SHOP</a>
+            <a href={`${LIVE}shop/handbags/`} target="_blank" rel="noreferrer">HANDBAGS</a>
+            <a href={`${LIVE}shop/watches/`} target="_blank" rel="noreferrer">WATCHES</a>
+            <a href={`${LIVE}shop/jewellery/`} target="_blank" rel="noreferrer">JEWELLERY</a>
           </div>
-          <a className="nav__cta" href={`${LIVE}sell/`} target="_blank" rel="noreferrer">Free valuation <ArrowUpRight size={14} /></a>
+
+          <a className="mfz-nav__cta" href={`${LIVE}sell/`} target="_blank" rel="noreferrer">
+            SELL WITH US <ArrowRight size={15} />
+          </a>
+
+          <button className="mfz-nav__menu" onClick={() => setOpen(true)} aria-label="Open menu">
+            <Menu size={22} />
+          </button>
         </div>
       </nav>
+
       <AnimatePresence>
         {open && (
-          <motion.div className="menu-panel" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div className="menu-panel__inner" initial={{ y: '-100%' }} animate={{ y: 0 }} exit={{ y: '-100%' }} transition={{ duration: 0.58, ease: [0.76, 0, 0.24, 1] }}>
-              <div className="menu-panel__top">
-                <span>LOVE LUXURY</span>
-                <button onClick={() => setOpen(false)}><X size={22} /></button>
+          <motion.div className="mobile-menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div
+              className="mobile-menu__panel"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ duration: 0.45, ease: [0.76, 0, 0.24, 1] }}
+            >
+              <div className="mobile-menu__top">
+                <strong>LOVE LUXURY</strong>
+                <button onClick={() => setOpen(false)} aria-label="Close menu"><X /></button>
               </div>
-              <div className="menu-panel__links">
-                {links.map(([label, href], i) => (
-                  <a href={href} key={label} target="_blank" rel="noreferrer"><small>0{i + 1}</small>{label}<ArrowUpRight /></a>
-                ))}
-              </div>
-              <p>48 Beauchamp Place · Knightsbridge · London</p>
+              <a href={`${LIVE}shop/`} target="_blank" rel="noreferrer">SHOP</a>
+              <a href={`${LIVE}shop/handbags/`} target="_blank" rel="noreferrer">HANDBAGS</a>
+              <a href={`${LIVE}shop/watches/`} target="_blank" rel="noreferrer">WATCHES</a>
+              <a href={`${LIVE}shop/jewellery/`} target="_blank" rel="noreferrer">JEWELLERY</a>
+              <a href={`${LIVE}sell/`} target="_blank" rel="noreferrer">SELL WITH US</a>
+              <small>48 Beauchamp Place · Knightsbridge · London</small>
             </motion.div>
           </motion.div>
         )}
@@ -318,127 +203,348 @@ function Navbar() {
   );
 }
 
-function Collections() {
+function Hero() {
+  const [index, setIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
+  const [transitioning, setTransitioning] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [finePointer, setFinePointer] = useState(false);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const sectionRef = useRef<HTMLElement>(null);
+  const dragStart = useRef(0);
+  const frameRef = useRef(0);
+  const product = slides[index];
+
+  useEffect(() => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const pointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const sync = () => {
+      setReducedMotion(reduced.matches);
+      setFinePointer(pointer.matches);
+    };
+    sync();
+    reduced.addEventListener('change', sync);
+    pointer.addEventListener('change', sync);
+    return () => {
+      reduced.removeEventListener('change', sync);
+      pointer.removeEventListener('change', sync);
+    };
+  }, []);
+
+  useEffect(() => {
+    setTransitioning(true);
+    const timer = window.setTimeout(() => setTransitioning(false), 760);
+    return () => window.clearTimeout(timer);
+  }, [index]);
+
+  const selectSlide = useCallback((next: number) => {
+    if (transitioning || next === index) return;
+    const isForward = next > index || (index === slides.length - 1 && next === 0);
+    setDirection(isForward ? 1 : -1);
+    setIndex(next);
+  }, [index, transitioning]);
+
+  const goNext = useCallback(() => {
+    if (transitioning) return;
+    setDirection(1);
+    setIndex((value) => (value + 1) % slides.length);
+  }, [transitioning]);
+
+  const goPrevious = useCallback(() => {
+    if (transitioning) return;
+    setDirection(-1);
+    setIndex((value) => (value - 1 + slides.length) % slides.length);
+  }, [transitioning]);
+
+  useEffect(() => {
+    const keyboard = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowRight') goNext();
+      if (event.key === 'ArrowLeft') goPrevious();
+    };
+    window.addEventListener('keydown', keyboard);
+    return () => window.removeEventListener('keydown', keyboard);
+  }, [goNext, goPrevious]);
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLElement>) => {
+    if (finePointer && sectionRef.current) {
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      frameRef.current = requestAnimationFrame(() => {
+        const rect = sectionRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const x = (event.clientX - rect.left) / rect.width - 0.5;
+        const y = (event.clientY - rect.top) / rect.height - 0.5;
+        setTilt({ x: y * 8, y: x * 12 });
+      });
+    }
+
+    const distance = event.clientX - dragStart.current;
+    if (Math.abs(distance) > 70 && !transitioning) {
+      distance < 0 ? goNext() : goPrevious();
+      dragStart.current = event.clientX;
+    }
+  };
+
+  const desktopVariants = {
+    enter: (slideDirection: number) => ({
+      x: slideDirection > 0 ? 120 : -120,
+      y: 30,
+      scale: 0.65,
+      opacity: 0,
+      rotateZ: slideDirection > 0 ? 15 : -15,
+      filter: 'blur(8px)',
+    }),
+    center: {
+      x: 0,
+      y: 0,
+      scale: 1,
+      opacity: 1,
+      rotateZ: 0,
+      filter: 'blur(0px)',
+      transition: { duration: reducedMotion ? 0.01 : 0.7, ease: [0.22, 1, 0.36, 1] as const },
+    },
+    exit: (slideDirection: number) => ({
+      x: slideDirection > 0 ? -120 : 120,
+      y: -30,
+      scale: 0.65,
+      opacity: 0,
+      rotateZ: slideDirection > 0 ? -15 : 15,
+      filter: 'blur(8px)',
+      transition: { duration: reducedMotion ? 0.01 : 0.5 },
+    }),
+  };
+
   return (
-    <section className="collections section" id="collections">
-      <div className="page-shell">
-        <div className="section-heading">
-          <p className="eyebrow">THE PRIVATE GALLERY</p>
-          <h2>Three worlds.<br /><em>One standard.</em></h2>
-          <p>Luxury should never feel crowded. Explore the collection the way you would experience a private appointment: one exceptional object at a time.</p>
-        </div>
+    <section
+      id="top"
+      ref={sectionRef}
+      className="mfz-hero"
+      style={{ background: product.bgGradient }}
+      onPointerDown={(event) => { dragStart.current = event.clientX; }}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={() => setTilt({ x: 0, y: 0 })}
+    >
+      <div className="grain" />
 
-        <div className="collection-grid">
-          {categories.map((item, i) => (
-            <motion.a
-              className="collection-card"
-              href={item.href}
-              target="_blank"
-              rel="noreferrer"
-              key={item.label}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
-              transition={{ duration: 0.7, delay: i * 0.08 }}
-            >
-              <div className="collection-card__image"><img src={item.image} alt={item.label} loading="lazy" /></div>
-              <div className="collection-card__top"><span>{item.number}</span><ArrowUpRight size={18} /></div>
-              <div className="collection-card__copy"><small>{item.sub}</small><h3>{item.label}</h3></div>
-            </motion.a>
-          ))}
-        </div>
+      <div className="lux-particles" aria-hidden="true">
+        {Array.from({ length: 22 }).map((_, particleIndex) => (
+          <motion.i
+            key={particleIndex}
+            style={{
+              left: `${6 + ((particleIndex * 17) % 90)}%`,
+              top: `${8 + ((particleIndex * 31) % 84)}%`,
+              background: particleIndex % 4 === 0 ? '#ffffff' : product.accentColor,
+              boxShadow: `0 0 13px ${product.accentColor}`,
+            }}
+            animate={reducedMotion ? undefined : {
+              y: [8, -18, 8],
+              x: [0, particleIndex % 2 === 0 ? 7 : -7, 0],
+              opacity: [0.08, 0.72, 0.08],
+              scale: [0.7, 1.35, 0.7],
+            }}
+            transition={{ duration: 4 + (particleIndex % 5), repeat: Infinity, delay: particleIndex * 0.11 }}
+          />
+        ))}
       </div>
-    </section>
-  );
-}
 
-function Statement() {
-  return (
-    <section className="statement">
-      <div className="statement__track">
-        <span>AUTHENTICITY</span><i>✦</i><span>PROVENANCE</span><i>✦</i><span>RARITY</span><i>✦</i><span>EXPERTISE</span><i>✦</i><span>AUTHENTICITY</span>
+      <motion.div
+        className="mfz-hero__glow"
+        style={{ background: product.dominantColor }}
+        animate={reducedMotion ? undefined : { opacity: [0.26, 0.46, 0.26], scale: [0.96, 1.06, 0.96] }}
+        transition={{ duration: 5.2, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
+      <div className="bg-word">
+        <AnimatePresence mode="popLayout">
+          <motion.div
+            key={product.backgroundWord}
+            className="bg-word-text"
+            style={{ color: product.textColor }}
+            initial={{ opacity: 0, scale: 1.15 }}
+            animate={{ opacity: 0.075, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.7 }}
+          >
+            {product.backgroundWord}
+          </motion.div>
+        </AnimatePresence>
       </div>
-      <div className="page-shell statement__inner">
-        <p className="eyebrow">TRUSTED EXPERTS IN LUXURY RESALE SINCE 2012</p>
-        <h2>Some things are purchased.<br /><em>Others are collected.</em></h2>
-      </div>
-    </section>
-  );
-}
 
-function FeaturePiece() {
-  const section = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: section, offset: ['start end', 'end start'] });
-  const y = useSpring(useTransform(scrollYProgress, [0, 1], [90, -90]), { stiffness: 90, damping: 24 });
-  const rotate = useTransform(scrollYProgress, [0, 1], [-3, 3]);
+      <div className="mfz-shell mfz-hero__content">
+        <div className="hero-grid">
+          <div className="mfz-hero__info">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`info-${product.id}`}
+                variants={titleContainer}
+                initial="hidden"
+                animate="show"
+                exit="exit"
+              >
+                <motion.div variants={titleItem} className="mfz-hero__eyebrow">
+                  <span style={{ background: product.accentColor, color: product.onAccent }}>
+                    {product.id} / 0{slides.length}
+                  </span>
+                  <small style={{ color: product.textColor }}>{product.category}</small>
+                </motion.div>
 
-  return (
-    <section className="feature-piece" ref={section}>
-      <div className="feature-piece__halo" />
-      <div className="page-shell feature-piece__inner">
-        <div className="feature-piece__copy">
-          <p className="eyebrow">NEW ARRIVAL · 2026</p>
-          <h2>Mini Kelly.<br /><em>Maximum presence.</em></h2>
-          <p>Hermès Mini Kelly HSS Noir — black Epsom with a Bordeaux verso and palladium hardware. Box fresh.</p>
-          <div className="feature-piece__price">£28,000 <span>Box Fresh</span></div>
-          <MagneticLink href="https://loveluxury.com/uk/shop/hermes-mini-kelly-hss-noir-black-verso-bordeaux-epsom-palladium-hardware/" light>
-            View the piece
-          </MagneticLink>
-        </div>
-        <motion.div className="feature-piece__visual" style={{ y, rotate }}>
-          <span className="feature-piece__ring" />
-          <img src="https://loveluxury.com/wp-content/uploads/2026/08/Hermes-Mini-Kelly-HSS-Noir-Black-Verso-Bordeaux-Epsom-Palladium-Hardware-2026-1.jpg" alt="Hermès Mini Kelly HSS Noir" loading="lazy" />
-          <div className="feature-piece__label"><span>HERMÈS</span><small>20 × 12 × 6 CM</small></div>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
+                <motion.h1 variants={titleItem} style={{ color: product.textColor }}>
+                  <MaskedTitle text={product.name} />
+                </motion.h1>
 
-function SellSection() {
-  const steps = [
-    ['01', 'Complete the form', 'Share details and images for an accurate first valuation.'],
-    ['02', 'Book an appointment', 'Same-day appointments are available in Knightsbridge.'],
-    ['03', 'Expert inspection', 'A specialist examines the piece and confirms your quote.'],
-    ['04', 'Receive payment', 'Secure payment is made by bank transfer.'],
-  ];
+                <motion.p variants={titleItem} className="mfz-hero__tagline" style={{ color: product.textColor }}>
+                  {product.tagline}
+                </motion.p>
 
-  return (
-    <section className="sell section">
-      <div className="page-shell">
-        <div className="sell__heading">
-          <div><p className="eyebrow">SELL WITH LOVE LUXURY</p><h2>Your collection<br /><em>deserves certainty.</em></h2></div>
-          <p>A calmer, more considered way to sell high-value pieces — with specialists, clear steps and no marketplace noise.</p>
-        </div>
-        <div className="sell__steps">
-          {steps.map(([num, title, copy]) => (
-            <div className="sell-step" key={num}>
-              <span>{num}</span><h3>{title}</h3><p>{copy}</p>
+                <motion.p variants={titleItem} className="mfz-hero__description" style={{ color: product.textColor }}>
+                  {product.description}
+                </motion.p>
+
+                <motion.div variants={titleItem} className="mfz-hero__label" style={{ color: product.textColor }}>
+                  DETAILS
+                </motion.div>
+
+                <motion.div variants={titleItem} className="mfz-hero__chips">
+                  {product.details.map((detail, detailIndex) => (
+                    <span
+                      key={detail}
+                      style={{
+                        borderColor: detailIndex === 0 ? product.accentColor : `${product.textColor}33`,
+                        background: detailIndex === 0 ? product.accentColor : 'rgba(255,255,255,.08)',
+                        color: detailIndex === 0 ? product.onAccent : product.textColor,
+                      }}
+                    >
+                      {detail}
+                    </span>
+                  ))}
+                </motion.div>
+
+                <motion.div variants={titleItem} className="mfz-hero__availability" style={{ color: product.textColor }}>
+                  <Sparkles size={16} color={product.accentColor} />
+                  AUTHENTICATED · AVAILABLE IN KNIGHTSBRIDGE
+                </motion.div>
+
+                <motion.div variants={titleItem} className="mfz-hero__actions">
+                  <a
+                    className="mfz-btn mfz-btn--primary"
+                    href={product.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ background: product.accentColor, color: product.onAccent, boxShadow: `0 14px 45px ${product.accentColor}24` }}
+                  >
+                    {product.cta}
+                  </a>
+                  <a
+                    className="mfz-btn mfz-btn--outline"
+                    href={`${LIVE}sell/`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ borderColor: product.textColor, color: product.textColor }}
+                  >
+                    SELL A PIECE
+                  </a>
+                </motion.div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          <div className="mfz-hero__visual">
+            <div className="product-stage">
+              <div className="circular-track" style={{ borderColor: product.accentColor }} />
+              <div className="circular-track circular-track--inner" style={{ borderColor: product.textColor }} />
+
+              <AnimatePresence mode="popLayout" custom={direction}>
+                <motion.div
+                  key={`product-${product.id}`}
+                  custom={direction}
+                  variants={desktopVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  className="lux-product"
+                >
+                  <motion.div
+                    className="lux-product__inner"
+                    animate={{
+                      rotateY: tilt.y,
+                      rotateX: tilt.x,
+                      y: reducedMotion ? 0 : [0, -12, 0],
+                    }}
+                    transition={{
+                      rotateX: { type: 'spring', stiffness: 40, damping: 12 },
+                      rotateY: { type: 'spring', stiffness: 40, damping: 12 },
+                      y: { duration: 4.5, repeat: Infinity, ease: 'easeInOut' },
+                    }}
+                  >
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      draggable={false}
+                      fetchPriority="high"
+                      style={{
+                        transform: `rotate(${product.rotation}deg) scale(${product.scale})`,
+                        filter: `drop-shadow(0 28px 36px ${product.dominantColor}77) drop-shadow(0 0 24px ${product.accentColor}2f)`,
+                      }}
+                    />
+                  </motion.div>
+
+                  {!reducedMotion && product.details.map((detail, detailIndex) => (
+                    <motion.span
+                      className={`floating-detail floating-detail--${detailIndex + 1}`}
+                      key={detail}
+                      style={{ borderColor: `${product.accentColor}80`, color: product.textColor }}
+                      animate={{ y: [0, -12, 0], opacity: [0.68, 1, 0.68] }}
+                      transition={{ duration: 3 + detailIndex, repeat: Infinity, delay: detailIndex * 0.35 }}
+                    >
+                      {detail}
+                    </motion.span>
+                  ))}
+                </motion.div>
+              </AnimatePresence>
             </div>
-          ))}
+          </div>
         </div>
-        <a className="sell__cta" href={`${LIVE}sell/`} target="_blank" rel="noreferrer"><span>VALUE MY PIECE</span><ArrowUpRight /></a>
       </div>
-    </section>
-  );
-}
 
-function Trust() {
-  return (
-    <section className="trust section">
-      <div className="page-shell trust__inner">
-        <div className="trust__visual">
-          <div className="trust__macro"><img src="https://loveluxury.com/uk/wp-content/uploads/sites/2/sites/2/2025/08/Patek-Philippe-Nautilus-Olive-Green-32-Baguette-Diamonds-Bezel-5711-1300A-1-1024x683.jpg" alt="Patek Philippe watch detail" loading="lazy" /></div>
-          <span className="trust__stamp"><ShieldCheck /><b>CERTIFIED</b><small>LOVE LUXURY</small></span>
-        </div>
-        <div className="trust__copy">
-          <p className="eyebrow">LIFETIME GUARANTEE OF AUTHENTICITY</p>
-          <h2>Details<br /><em>don’t lie.</em></h2>
-          <p>Every piece is examined by specialists before it earns a place in the collection. Because with rare objects, confidence is part of the purchase.</p>
-          <div className="trust__points">
-            <span><ShieldCheck /> Expert authentication</span>
-            <span><Watch /> Specialist watch knowledge</span>
-            <span><Gem /> Luxury jewellery expertise</span>
+      <div className="mfz-hero__controls">
+        <div className="mfz-shell">
+          <div className="mfz-progress">
+            <motion.span
+              style={{ background: product.accentColor }}
+              animate={{ width: `${((index + 1) / slides.length) * 100}%` }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            />
+          </div>
+
+          <div className="mfz-control-row">
+            <div className="mfz-control-row__arrows">
+              <button onClick={goPrevious} disabled={transitioning} style={{ borderColor: product.textColor, color: product.textColor }} aria-label="Previous collection">
+                <ChevronLeft size={20} />
+              </button>
+              <button onClick={goNext} disabled={transitioning} style={{ borderColor: product.textColor, color: product.textColor }} aria-label="Next collection">
+                <ChevronRight size={20} />
+              </button>
+              <span style={{ color: product.textColor }}>
+                {String(index + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}
+              </span>
+            </div>
+
+            <div className="mfz-control-row__tabs">
+              {slides.map((item, itemIndex) => (
+                <button
+                  key={item.id}
+                  onClick={() => selectSlide(itemIndex)}
+                  disabled={transitioning}
+                  className={itemIndex === index ? 'is-active' : ''}
+                  style={{ color: product.textColor }}
+                >
+                  {item.shortName}
+                </button>
+              ))}
+            </div>
+
+            <div className="mfz-control-row__trust" style={{ color: product.textColor }}>
+              <Star size={15} fill={product.accentColor} color={product.accentColor} /> 4.9 / 5
+            </div>
           </div>
         </div>
       </div>
@@ -446,18 +552,112 @@ function Trust() {
   );
 }
 
-function Visit() {
+const collections = [
+  {
+    icon: ShoppingBag,
+    title: 'HANDBAGS',
+    caption: 'Hermès · Chanel',
+    image: slides[0].image,
+    href: `${LIVE}shop/handbags/`,
+    tone: '#b95b2c',
+  },
+  {
+    icon: Watch,
+    title: 'WATCHES',
+    caption: 'Rolex · Patek Philippe · AP',
+    image: slides[1].image,
+    href: `${LIVE}shop/watches/`,
+    tone: '#52634d',
+  },
+  {
+    icon: Gem,
+    title: 'JEWELLERY',
+    caption: 'Cartier · Van Cleef & Arpels',
+    image: slides[2].image,
+    href: `${LIVE}shop/jewellery/`,
+    tone: '#7f2328',
+  },
+];
+
+function Collections() {
   return (
-    <section className="visit">
-      <div className="page-shell visit__inner">
-        <div><p className="eyebrow">THE LONDON SHOWROOM</p><h2>Knightsbridge.<br /><em>By appointment.</em></h2></div>
-        <div className="visit__details">
-          <p>48 Beauchamp Place<br />Knightsbridge, London<br />SW3 1NX</p>
-          <p>Mon–Sat · 11:00–18:00<br />Sun · 12:00–17:00</p>
-          <MagneticLink href="https://loveluxury.com/uk/contact-us/" light>Arrange a visit</MagneticLink>
+    <section className="mfz-section collections" id="collections">
+      <div className="mfz-shell">
+        <div className="mfz-section-head">
+          <span>THE COLLECTION</span>
+          <h2>CHOOSE YOUR<br />OBSESSION.</h2>
+          <p>Three worlds of exceptional pieces, each selected with the same uncompromising eye.</p>
+        </div>
+
+        <div className="collection-cards">
+          {collections.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <motion.a
+                key={item.title}
+                href={item.href}
+                target="_blank"
+                rel="noreferrer"
+                className="collection-card"
+                style={{ background: item.tone }}
+                whileHover={{ y: -10 }}
+                transition={{ type: 'spring', stiffness: 180, damping: 18 }}
+              >
+                <div className="collection-card__number">0{index + 1}</div>
+                <Icon className="collection-card__icon" />
+                <div className="collection-card__image"><img src={item.image} alt={item.title} /></div>
+                <div className="collection-card__copy">
+                  <small>{item.caption}</small>
+                  <h3>{item.title}</h3>
+                  <span>EXPLORE <ArrowRight size={18} /></span>
+                </div>
+              </motion.a>
+            );
+          })}
         </div>
       </div>
-      <div className="visit__word">LOVE LUXURY</div>
+    </section>
+  );
+}
+
+function TrustStrip() {
+  return (
+    <section className="trust-strip">
+      <div className="trust-strip__marquee">
+        <span>AUTHENTICATED</span><i>✦</i><span>CURATED</span><i>✦</i><span>KNIGHTSBRIDGE</span><i>✦</i><span>WORLDWIDE</span><i>✦</i>
+        <span>AUTHENTICATED</span><i>✦</i><span>CURATED</span><i>✦</i><span>KNIGHTSBRIDGE</span><i>✦</i><span>WORLDWIDE</span><i>✦</i>
+      </div>
+    </section>
+  );
+}
+
+function SellSection() {
+  return (
+    <section className="sell-section">
+      <div className="mfz-shell sell-section__grid">
+        <div>
+          <span className="sell-section__eyebrow">SELL WITH LOVE LUXURY</span>
+          <h2>YOUR PIECE.<br />OUR EXPERTISE.</h2>
+        </div>
+        <div className="sell-section__copy">
+          <ShieldCheck size={54} />
+          <p>Upload your piece, receive an expert valuation, arrange your appointment and sell with confidence.</p>
+          <a href={`${LIVE}sell/`} target="_blank" rel="noreferrer">START A VALUATION <ArrowRight /></a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Showroom() {
+  return (
+    <section className="showroom">
+      <div className="showroom__word">KNIGHTSBRIDGE</div>
+      <div className="mfz-shell showroom__content">
+        <span>48 BEAUCHAMP PLACE · LONDON SW3 1NX</span>
+        <h2>COME SEE<br />THE REAL THING.</h2>
+        <a href={`${LIVE}contact/`} target="_blank" rel="noreferrer">VISIT LOVE LUXURY <ArrowRight /></a>
+      </div>
     </section>
   );
 }
@@ -465,32 +665,26 @@ function Visit() {
 function Footer() {
   return (
     <footer className="footer">
-      <div className="page-shell footer__top">
-        <div className="footer__brand"><Sparkles size={18} /><span>LOVE LUXURY</span></div>
-        <div className="footer__links">
-          <a href={`${LIVE}shop/`} target="_blank" rel="noreferrer">Shop</a>
-          <a href={`${LIVE}sell/`} target="_blank" rel="noreferrer">Sell</a>
-          <a href={`${LIVE}authentication/`} target="_blank" rel="noreferrer">Authentication</a>
-          <a href={`${LIVE}about-us/`} target="_blank" rel="noreferrer">About</a>
-          <a href={`${LIVE}contact-us/`} target="_blank" rel="noreferrer">Contact</a>
+      <div className="mfz-shell">
+        <div className="footer__brand">LOVE <span>LUXURY</span></div>
+        <div className="footer__bottom">
+          <span>LONDON · DUBAI · WORLDWIDE</span>
+          <span>CONCEPT REDESIGN</span>
         </div>
       </div>
-      <div className="page-shell footer__bottom"><span>Concept redesign · 2026</span><span>London · Dubai · Worldwide</span></div>
     </footer>
   );
 }
 
 export default function App() {
   return (
-    <div id="top" className="site">
+    <div className="site">
       <Navbar />
       <Hero />
       <Collections />
-      <Statement />
-      <FeaturePiece />
+      <TrustStrip />
       <SellSection />
-      <Trust />
-      <Visit />
+      <Showroom />
       <Footer />
     </div>
   );

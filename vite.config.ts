@@ -9,35 +9,20 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['mfz-icon.svg'],
       devOptions: {
         enabled: false,
       },
       manifest: {
         id: '/',
-        name: 'MFZ Corn Dog',
-        short_name: 'MFZ',
-        description: 'Order MFZ favourites with your saved delivery location.',
-        theme_color: '#101010',
-        background_color: '#101010',
+        name: 'Love Luxury',
+        short_name: 'Love Luxury',
+        description: 'The private gallery for rare handbags, watches and jewellery.',
+        theme_color: '#f1e9dd',
+        background_color: '#f4efe7',
         display: 'standalone',
         start_url: '/',
         scope: '/',
-        orientation: 'portrait-primary',
-        icons: [
-          {
-            src: '/mfz-icon.svg',
-            sizes: '192x192',
-            type: 'image/svg+xml',
-            purpose: 'any',
-          },
-          {
-            src: '/mfz-icon.svg',
-            sizes: '512x512',
-            type: 'image/svg+xml',
-            purpose: 'any maskable',
-          },
-        ],
+        orientation: 'any',
       },
       workbox: {
         cleanupOutdatedCaches: true,
